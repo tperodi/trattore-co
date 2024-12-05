@@ -45,24 +45,28 @@ const Testimonials: React.FC = () => {
         Cosa dicono i nostri clienti
       </h2>
       <div className="container mx-auto px-6">
-  <Slider {...settings}>
-    {testimonials.map((testimonial, index) => (
-      <div
-        className="flex flex-col items-center text-center px-4"
-        key={index}
-      >
-        <Image
-          src={testimonial.image}
-          alt={testimonial.name}
-          className="w-24 h-24 rounded-full mb-6"
-        />
-        <p className="text-xl italic mb-4">"{testimonial.quote}"</p>
-        <h4 className="text-lg font-semibold">- {testimonial.name}</h4>
+        <Slider {...settings}>
+          {testimonials.map((testimonial, index) => (
+            <div
+              className="flex flex-col items-center text-center px-4"
+              key={index}
+            >
+              <Image
+                src={testimonial.image}
+                alt={testimonial.name}
+                className="w-24 h-24 rounded-full mb-6"
+                width={96}
+                height={96}
+              />
+              {/* Sostituito con entità HTML */}
+              <p className="text-xl italic mb-4">
+                &quot;{testimonial.quote}&quot;
+              </p>
+              <h4 className="text-lg font-semibold">- {testimonial.name}</h4>
+            </div>
+          ))}
+        </Slider>
       </div>
-    ))}
-  </Slider>
-</div>
-
     </section>
   );
 };

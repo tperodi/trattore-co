@@ -1,10 +1,10 @@
 "use client";
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Hook per il redirect
+import React, { useState } from "react";
+import { useRouter } from "next/navigation"; // Hook per il redirect
 
 const LoginForm: React.FC = () => {
-  const [identifier, setIdentifier] = useState(''); // Email o Nome Utente
-  const [password, setPassword] = useState('');
+  const [identifier, setIdentifier] = useState(""); // Email o Nome Utente
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -16,15 +16,15 @@ const LoginForm: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Errore nel login');
+        throw new Error(errorData.error || "Errore nel login");
       }
 
       const data = await response.json();
@@ -34,25 +34,34 @@ const LoginForm: React.FC = () => {
 
       // Reindirizza in base al ruolo
       const userRole = data.user.role;
-      if (userRole === 'Admin') {
-        router.push('/admin/dashboard');
-      } else if (userRole === 'Organizzatore') {
-        router.push('/organizzatore/dashboard');
-      } else if (userRole === 'Partecipante') {
-        router.push('/eventi');
+      if (userRole === "Admin") {
+        router.push("/admin/dashboard");
+      } else if (userRole === "Organizzatore") {
+        router.push("/organizzatore/dashboard");
+      } else if (userRole === "Partecipante") {
+        router.push("/eventi");
       } else {
-        throw new Error('Ruolo non riconosciuto.');
+        throw new Error("Ruolo non riconosciuto.");
       }
-    } catch (err: any) {
-      setError(err.message || 'Errore sconosciuto');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Errore sconosciuto.");
+      }
     }
   };
 
   return (
     <div className="max-w-md mx-auto bg-white shadow-md rounded-lg p-6">
-
-      {error && <p className="text-red-500 font-semibold text-center">{error}</p>}
-      {successMessage && <p className="text-green-500 font-semibold text-center">{successMessage}</p>}
+      {error && (
+        <p className="text-red-500 font-semibold text-center">{error}</p>
+      )}
+      {successMessage && (
+        <p className="text-green-500 font-semibold text-center">
+          {successMessage}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Campo Identifier (Nome Utente o Email) */}

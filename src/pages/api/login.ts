@@ -38,17 +38,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Cerca l'utente in base all'email o al nome utente
     const { data: user, error } = await supabase
-      .from('utente')
+      .from('utente') // Specifica il tipo RowType (User)
       .select('*')
       .or(`email.eq.${identifier},nomeutente.eq.${identifier}`)
       .single();
 
-    if (error) {
-      console.error('Errore Supabase:', error.message);
-      return res.status(401).json({ error: 'Credenziali non valide.' });
-    }
-
-    if (!user) {
+    if (error || !user) {
+      console.error('Errore Supabase:', error?.message || 'Utente non trovato.');
       return res.status(401).json({ error: 'Credenziali non valide.' });
     }
 
