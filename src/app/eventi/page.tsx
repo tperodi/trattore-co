@@ -15,16 +15,24 @@ interface EventData {
   category: string; // Nuova proprietà
 }
 
-const Page: React.FC = () => {
-  const [events, setEvents] = useState<EventData[]>([]); // Stato per gli eventi
-  const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>(""); // Stato per la ricerca
-  const [startDate, setStartDate] = useState<string>(""); // Data di inizio filtro
-  const [endDate, setEndDate] = useState<string>(""); // Data di fine filtro
-  const [loading, setLoading] = useState<boolean>(true); // Stato per il caricamento
-  const [error, setError] = useState<string | null>(null); // Stato per gli errori
+interface ApiEvent {
+  ide?: number;
+  titolo?: string;
+  data?: string;
+  luogo?: string;
+  descrizione?: string;
+  categoria?: string;
+}
 
-  // Recupero eventi dall'API
+const Page: React.FC = () => {
+  const [events, setEvents] = useState<EventData[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchEvents = async () => {
       setLoading(true);
@@ -36,17 +44,16 @@ const Page: React.FC = () => {
         }
         const data = await response.json();
 
-        // Mappare i dati per adattarli alla struttura di EventData
-        const mappedEvents: EventData[] = data.events.map((event: any) => ({
-          id: event.ide || 0, // Fallback se il campo non esiste
+        const mappedEvents: EventData[] = data.events.map((event: ApiEvent) => ({
+          id: event.ide || 0,
           title: event.titolo || "Titolo non disponibile",
           date: event.data || "",
           location: event.luogo || "Località non specificata",
           description: event.descrizione || "Descrizione non disponibile",
-          category: event.categoria || "Categoria non specificata", // Aggiunta categoria
+          category: event.categoria || "Categoria non specificata",
         }));
 
-        setEvents(mappedEvents); // Aggiorna lo stato con i dati mappati
+        setEvents(mappedEvents);
       } catch (err: unknown) {
         console.error("Errore nella fetch:", err);
         setError(
@@ -60,7 +67,6 @@ const Page: React.FC = () => {
     fetchEvents();
   }, []);
 
-  // Filtraggio dinamico degli eventi
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) || false;
@@ -80,16 +86,12 @@ const Page: React.FC = () => {
       <div className="container mx-auto px-6 py-8">
         <h1 className="text-3xl font-bold mb-6">Eventi</h1>
 
-        {/* Gestione dello stato di caricamento e errori */}
         {loading && <p>Caricamento eventi...</p>}
         {error && <p className="text-red-500">Errore: {error}</p>}
 
         {!loading && !error && (
           <>
-            {/* Barra di ricerca */}
             <EventSearchBar onSearch={setSearchQuery} />
-
-            {/* Filtro per le date */}
             <div className="flex space-x-4 mb-6">
               <div>
                 <label
@@ -123,10 +125,8 @@ const Page: React.FC = () => {
               </div>
             </div>
 
-            {/* Lista degli eventi */}
             <EventList events={filteredEvents} onEventClick={setSelectedEvent} />
 
-            {/* Modale per i dettagli dell'evento */}
             {selectedEvent && (
               <EventDetailModal
                 event={selectedEvent}
