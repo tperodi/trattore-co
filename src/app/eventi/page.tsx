@@ -1,119 +1,144 @@
 "use client";
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Hook per il redirect
+import React, { useState, useEffect } from "react";
+import EventSearchBar from "../../components/Eventi/EventSearchBar";
+import EventList from "../../components/Eventi/EventList";
+import EventDetailModal from "../../components/Eventi/EventDetailModal";
+import Navbar from "@/components/LandingPage/Navbar";
+import Footer from "@/components/LandingPage/Footer";
 
-interface UserData {
-  username: string;
-  role: string;
+interface EventData {
+  id: number;
+  title: string;
+  date: string; // Formato ISO: "YYYY-MM-DD"
+  location: string;
+  description: string;
+  category: string; // Nuova proprietà
 }
 
-const LoginForm: React.FC = () => {
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+const Page: React.FC = () => {
+  const [events, setEvents] = useState<EventData[]>([]); // Stato per gli eventi
+  const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>(""); // Stato per la ricerca
+  const [startDate, setStartDate] = useState<string>(""); // Data di inizio filtro
+  const [endDate, setEndDate] = useState<string>(""); // Data di fine filtro
+  const [loading, setLoading] = useState<boolean>(true); // Stato per il caricamento
+  const [error, setError] = useState<string | null>(null); // Stato per gli errori
 
-  const router = useRouter(); // Hook per il redirect
+  // Recupero eventi dall'API
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch("/api/getEvents");
+        if (!response.ok) {
+          throw new Error("Errore durante il recupero degli eventi.");
+        }
+        const data = await response.json();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-    setSuccessMessage(null);
+        // Mappare i dati per adattarli alla struttura di EventData
+        const mappedEvents: EventData[] = data.events.map((event: any) => ({
+          id: event.ide || 0, // Fallback se il campo non esiste
+          title: event.titolo || "Titolo non disponibile",
+          date: event.data || "",
+          location: event.luogo || "Località non specificata",
+          description: event.descrizione || "Descrizione non disponibile",
+          category: event.categoria || "Categoria non specificata", // Aggiunta categoria
+        }));
 
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Errore nel login');
+        setEvents(mappedEvents); // Aggiorna lo stato con i dati mappati
+      } catch (err: unknown) {
+        console.error("Errore nella fetch:", err);
+        setError(
+          err instanceof Error ? err.message : "Errore sconosciuto durante la fetch."
+        );
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const data = await response.json();
+    fetchEvents();
+  }, []);
 
-      // Controlla se data.user esiste
-      if (!data.user || !data.user.username || !data.user.role) {
-        throw new Error('Risposta API non valida.');
-      }
+  // Filtraggio dinamico degli eventi
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch =
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) || false;
 
-      const userData: UserData = data.user;
+    const matchesStartDate =
+      !startDate || new Date(event.date) >= new Date(startDate);
 
-      // Mostra il messaggio di successo
-      setSuccessMessage(`Benvenuto, ${userData.username}!`);
+    const matchesEndDate =
+      !endDate || new Date(event.date) <= new Date(endDate);
 
-      // Reindirizza in base al ruolo
-      const userRole = userData.role;
-      if (userRole === 'Admin') {
-        router.push('/admin/dashboard');
-      } else if (userRole === 'Organizzatore') {
-        router.push('/organizzatore/dashboard');
-      } else if (userRole === 'Partecipante') {
-        router.push('/eventi');
-      } else {
-        throw new Error('Ruolo non riconosciuto.');
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Errore sconosciuto');
-      }
-    }
-  };
+    return matchesSearch && matchesStartDate && matchesEndDate;
+  });
 
   return (
-    <div className="max-w-md mx-auto bg-white shadow-md rounded-lg p-6">
-      {error && <p className="text-red-500 font-semibold text-center">{error}</p>}
-      {successMessage && (
-        <p className="text-green-500 font-semibold text-center">{successMessage}</p>
-      )}
+    <>
+      <Navbar />
+      <div className="container mx-auto px-6 py-8">
+        <h1 className="text-3xl font-bold mb-6">Eventi</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Campo Identifier (Nome Utente o Email) */}
-        <div className="mb-4">
-          <label htmlFor="identifier" className="block text-gray-700 mb-2">
-            Nome Utente o Email
-          </label>
-          <input
-            type="text"
-            id="identifier"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Inserisci nome utente o email"
-            required
-          />
-        </div>
+        {/* Gestione dello stato di caricamento e errori */}
+        {loading && <p>Caricamento eventi...</p>}
+        {error && <p className="text-red-500">Errore: {error}</p>}
 
-        {/* Campo Password */}
-        <div className="mb-4">
-          <label htmlFor="password" className="block text-gray-700 mb-2">
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Inserisci la tua password"
-            required
-          />
-        </div>
+        {!loading && !error && (
+          <>
+            {/* Barra di ricerca */}
+            <EventSearchBar onSearch={setSearchQuery} />
 
-        {/* Pulsante Login */}
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Accedi
-        </button>
-      </form>
-    </div>
+            {/* Filtro per le date */}
+            <div className="flex space-x-4 mb-6">
+              <div>
+                <label
+                  htmlFor="startDate"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Data Inizio
+                </label>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="endDate"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Data Fine
+                </label>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Lista degli eventi */}
+            <EventList events={filteredEvents} onEventClick={setSelectedEvent} />
+
+            {/* Modale per i dettagli dell'evento */}
+            {selectedEvent && (
+              <EventDetailModal
+                event={selectedEvent}
+                onClose={() => setSelectedEvent(null)}
+              />
+            )}
+          </>
+        )}
+      </div>
+      <Footer />
+    </>
   );
 };
 
-export default LoginForm;
+export default Page;

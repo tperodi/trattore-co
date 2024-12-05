@@ -8,10 +8,11 @@ const supabaseServiceKey: string = process.env.SUPABASE_SERVICE_KEY || '';
 
 if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error(
-    'Assicurati di configurare SUPABASE_URL e SUPABASE_SERVICE_KEY nelle variabili d\'ambiente.'
+    "Assicurati di configurare SUPABASE_URL e SUPABASE_SERVICE_KEY nelle variabili d'ambiente."
   );
 }
 
+// Crea il client Supabase
 const supabase: SupabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
 // Interfaccia per l'utente
@@ -37,12 +38,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // Cerca l'utente in base all'email o al nome utente
-    const { data: user, error } = await supabase
-      .from('utente') // Specifica il tipo RowType (User)
+    const { data, error } = await supabase
+      .from<'utente', User>('utente') // Fornisci entrambi gli argomenti di tipo
       .select('*')
       .or(`email.eq.${identifier},nomeutente.eq.${identifier}`)
       .single();
-
+      const user = data as User | null;
     if (error || !user) {
       console.error('Errore Supabase:', error?.message || 'Utente non trovato.');
       return res.status(401).json({ error: 'Credenziali non valide.' });
