@@ -1,5 +1,6 @@
 import React from 'react';
 import Slider from 'react-slick';
+import Image from 'next/image';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
@@ -50,7 +51,7 @@ const Testimonials: React.FC = () => {
         className="flex flex-col items-center text-center px-4"
         key={index}
       >
-        <img
+        <Image
           src={testimonial.image}
           alt={testimonial.name}
           className="w-24 h-24 rounded-full mb-6"

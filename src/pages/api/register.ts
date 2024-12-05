@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import bcrypto from 'bcrypt'; // Libreria per hashare le password
+import bcrypt from 'bcrypt'; // Libreria per hashare le password
 
 // Configura Supabase
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -14,32 +14,33 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+interface UserPayload {
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { username, password, firstName, lastName, email, role } = req.body;
+    try {
+      const { username, password, firstName, lastName, email, role }: UserPayload = req.body;
 
-    if (!username || !password || !firstName || !lastName || !email || !role) {
-        console.error('Campi mancanti:', {
-          username,
-          password,
-          firstName,
-          lastName,
-          email,
-          role,
-        });
+      // Validazione dei campi
+      if (!username || !password || !firstName || !lastName || !email || !role) {
         return res.status(400).json({ error: 'Tutti i campi sono obbligatori.' });
       }
-      
 
-    // Controlla che il ruolo sia valido
-    const validRoles = ['Organizzatore', 'Partecipante', 'Admin'];
-    if (!validRoles.includes(role)) {
-      return res.status(400).json({ error: 'Ruolo non valido.' });
-    }
+      // Validazione del ruolo
+      const validRoles = ['Organizzatore', 'Partecipante', 'Admin'];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ error: 'Ruolo non valido.' });
+      }
 
-    try {
       // Hash della password
-      const hashedPassword = await bcrypto.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       // Inserimento nel database tramite Supabase
       const { data, error } = await supabase
@@ -56,15 +57,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ]);
 
       if (error) {
-        throw error;
+        console.error('Errore durante l\'inserimento in Supabase:', error.message);
+        return res.status(500).json({ error: 'Errore durante la registrazione dell\'utente.' });
       }
 
       return res.status(201).json({ message: 'Utente registrato con successo', data });
-    } catch (err: any) {
-      return res.status(500).json({ error: err.message || 'Errore del server' });
+    } catch (err: unknown) {
+      console.error('Errore del server:', err);
+      return res.status(500).json({
+        error: (err instanceof Error ? err.message : 'Errore del server'),
+      });
     }
   } else {
     res.setHeader('Allow', ['POST']);
-    res.status(405).end(`Metodo ${req.method} non consentito`);
+    return res.status(405).end(`Metodo ${req.method} non consentito`);
   }
 }

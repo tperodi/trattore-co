@@ -1,15 +1,23 @@
 "use client";
-import React, { useState } from 'react';
-import FormInput from './FormInput';
-import SubmitButton from './SubmitButton';
+import React, { useState } from "react";
+import FormInput from "./FormInput";
+import SubmitButton from "./SubmitButton";
+
+type FormData = {
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
 
 const RegisterForm: React.FC = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    firstName: '',
-    lastName: '',
-    email: '',
+  const [formData, setFormData] = useState<FormData>({
+    username: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    email: "",
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -17,10 +25,10 @@ const RegisterForm: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prevFormData) => ({
+      ...prevFormData,
       [name]: value,
-    });
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -29,37 +37,47 @@ const RegisterForm: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          role: 'Partecipante', // Se il ruolo non è selezionabile, impostalo manualmente
+          role: "Partecipante", // Ruolo predefinito
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Errore nella registrazione');
+        throw new Error(errorData.error || "Errore nella registrazione");
       }
 
-      setSuccessMessage('Registrazione avvenuta con successo! Benvenuto!');
+      setSuccessMessage("Registrazione avvenuta con successo! Benvenuto!");
       setFormData({
-        username: '',
-        password: '',
-        firstName: '',
-        lastName: '',
-        email: '',
+        username: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+        email: "",
       });
-    } catch (err: any) {
-      setError(err.message || 'Errore sconosciuto');
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Errore sconosciuto");
+      }
     }
   };
 
   return (
     <div>
-      {error && <p className="text-red-500 font-semibold text-center">{error}</p>}
-      {successMessage && <p className="text-green-500 font-semibold text-center">{successMessage}</p>}
+      {error && (
+        <p className="text-red-500 font-semibold text-center">{error}</p>
+      )}
+      {successMessage && (
+        <p className="text-green-500 font-semibold text-center">
+          {successMessage}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormInput

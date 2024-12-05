@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcrypt'; // Per verificare la password
 
 // Configura Supabase
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '';
+const supabaseUrl: string = process.env.SUPABASE_URL || '';
+const supabaseServiceKey: string = process.env.SUPABASE_SERVICE_KEY || '';
 
 if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error(
@@ -12,7 +12,16 @@ if (!supabaseUrl || !supabaseServiceKey) {
   );
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase: SupabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+
+// Interfaccia per l'utente
+interface User {
+  idu: string;
+  nomeutente: string;
+  email: string;
+  password: string;
+  ruolo: string;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -20,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).end(`Metodo ${req.method} non consentito`);
   }
 
-  const { identifier, password } = req.body;
+  const { identifier, password }: { identifier: string; password: string } = req.body;
 
   if (!identifier || !password) {
     return res.status(400).json({ error: 'Email/Nome Utente e password sono obbligatori.' });
@@ -34,7 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .or(`email.eq.${identifier},nomeutente.eq.${identifier}`)
       .single();
 
-    if (error || !user) {
+    if (error) {
+      console.error('Errore Supabase:', error.message);
+      return res.status(401).json({ error: 'Credenziali non valide.' });
+    }
+
+    if (!user) {
       return res.status(401).json({ error: 'Credenziali non valide.' });
     }
 
@@ -55,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         role: user.ruolo,
       },
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('Errore durante il login:', err);
     return res.status(500).json({ error: 'Errore del server.' });
   }
