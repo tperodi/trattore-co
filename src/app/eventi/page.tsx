@@ -80,6 +80,11 @@ const Page: React.FC = () => {
     return matchesSearch && matchesStartDate && matchesEndDate;
   });
 
+  const handleBook = (event: EventData) => {
+    // Aggiungi qui la logica di prenotazione, ad esempio invio a un'API
+    alert(`Prenotazione effettuata per l'evento: ${event.title}`);
+  };
+
   return (
     <>
       <Navbar />
@@ -131,6 +136,7 @@ const Page: React.FC = () => {
               <EventDetailModal
                 event={selectedEvent}
                 onClose={() => setSelectedEvent(null)}
+                onBook={() => handleBook(selectedEvent)}
               />
             )}
           </>
