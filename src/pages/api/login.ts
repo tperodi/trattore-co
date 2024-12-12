@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import bcrypt from 'bcrypt'; // Per verificare la password
+import bcrypt from 'bcrypt';
+import { serialize } from 'cookie'; // Per gestire i cookie
 
 // Configura Supabase
 const supabaseUrl: string = process.env.SUPABASE_URL || '';
@@ -39,11 +40,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Cerca l'utente in base all'email o al nome utente
     const { data, error } = await supabase
-      .from<'utente', User>('utente') // Fornisci entrambi gli argomenti di tipo
+      .from<'utente', User>('utente')
       .select('*')
       .or(`email.eq.${identifier},nomeutente.eq.${identifier}`)
       .single();
-      const user = data as User | null;
+
+    const user = data as User | null;
+
     if (error || !user) {
       console.error('Errore Supabase:', error?.message || 'Utente non trovato.');
       return res.status(401).json({ error: 'Credenziali non valide.' });
@@ -56,7 +59,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Credenziali non valide.' });
     }
 
-    // Risposta di successo con i dettagli dell'utente
+    // Crea un cookie per memorizzare i dati dell'utente
+    const cookie = serialize('user', JSON.stringify({
+      id: user.idu,
+      username: user.nomeutente,
+      email: user.email,
+      role: user.ruolo,
+    }), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 giorni
+    });
+
+    // Imposta il cookie nella risposta
+    res.setHeader('Set-Cookie', cookie);
+
+    // Risposta di successo
     return res.status(200).json({
       message: 'Login effettuato con successo',
       user: {
