@@ -14,7 +14,7 @@ export function middleware(req: NextRequest) {
     const user = JSON.parse(userCookie.value);
 
     // Protezione delle rotte specifiche
-    if (req.nextUrl.pathname.startsWith('/admin/dashboard') && user.role !== 'admin') {
+    if (req.nextUrl.pathname.startsWith('/admin/dashboard') && user.role !== 'Admin') {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
 

@@ -32,6 +32,8 @@ const LoginForm: React.FC = () => {
       // Mostra il messaggio di successo
       setSuccessMessage(`Benvenuto, ${data.user.username}!`);
 
+      localStorage.setItem("userId",data.user.id);
+
       // Reindirizza in base al ruolo
       const userRole = data.user.role;
       if (userRole === "Admin") {
