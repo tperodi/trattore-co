@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface EventData {
   id: number;
@@ -20,10 +20,10 @@ const EventList: React.FC<EventListProps> = ({ events, onEventClick }) => {
       {events.map((event) => (
         <div
           key={event.id}
-          className="border rounded-lg p-4 shadow hover:shadow-lg cursor-pointer"
+          className="border rounded-lg p-4 shadow hover:shadow-lg cursor-pointer bg-gray-50"
           onClick={() => onEventClick(event)}
         >
-          <h3 className="text-xl font-bold mb-2">{event.title}</h3>
+          <h3 className="text-xl font-bold mb-2 text-blue-600">{event.title}</h3>
           <p className="text-gray-600">{event.date}</p>
           <p className="text-gray-500">{event.location}</p>
           <p className="text-sm text-gray-400">{event.category}</p>
