@@ -148,30 +148,46 @@ const Page: React.FC = () => {
 
   const handleBookEvent = async (eventId: number) => {
     try {
+      // Recupera userId da localStorage e lo converte in numero
+      const userId = Number(localStorage.getItem("userId"));
+  
+      // Verifica che user_id sia un numero valido
+      if (isNaN(userId)) {
+        throw new Error("User ID non valido.");
+      }
+  
       const response = await fetch('/api/events/book', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           eventId: eventId,
-          userId: 5,
-          stato: "Confermata"
-        })
+          userId: userId,
+          stato: "Confermata",
+        }),
       });
-
+  
       if (!response.ok) {
-        throw new Error('Errore durante la prenotazione dell\'evento.');
+        // Analizza la risposta del server per ottenere dettagli sull'errore
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Errore durante la prenotazione dell\'evento.');
       }
-
+  
       // Se la chiamata va a buon fine
       toast.success('Evento prenotato con successo!');
       setSelectedEvent(null);
     } catch (err: unknown) {
-      console.error('Errore durante la prenotazione:', err);
-      toast.error('Impossibile prenotare l\'evento. Riprova più tardi.');
+      if (err instanceof Error) {
+        console.error('Errore durante la prenotazione:', err.message);
+        toast.error(err.message);
+      } else {
+        console.error('Errore sconosciuto:', err);
+        toast.error('Errore sconosciuto durante la prenotazione. Riprova più tardi.');
+      }
     }
   };
+  
 
   return (
     <>
