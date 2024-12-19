@@ -2,7 +2,7 @@ import React from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
-const OrganizzatoreDashboard: React.FC = () => {
+const Dashboard: React.FC = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -47,4 +47,4 @@ const OrganizzatoreDashboard: React.FC = () => {
   );
 };
 
-export default OrganizzatoreDashboard;
+export default Dashboard;

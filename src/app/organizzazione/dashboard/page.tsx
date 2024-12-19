@@ -1,4 +1,4 @@
-import OrganizzazioneDashboard from "@/components/Organizzazione/OrganizzazioneDashboard"
+import OrganizzazioneDashboard from "@/components/Organizzatore/Dashboard"
 const App = () => {
   return <OrganizzazioneDashboard />;
 };

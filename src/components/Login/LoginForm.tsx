@@ -35,15 +35,18 @@ const LoginForm: React.FC = () => {
       localStorage.setItem("userId",data.user.id);
 
       // Reindirizza in base al ruolo
-      const userRole = data.user.role;
-      if (userRole === "Admin") {
-        router.push("/admin/dashboard");
-      } else if (userRole === "Organizzatore") {
-        router.push("/organizzatore/dashboard");
-      } else if (userRole === "Partecipante") {
-        router.push("/eventi");
-      } else {
-        throw new Error("Ruolo non riconosciuto.");
+      switch (data.user.role) {
+        case "Admin":
+          router.push("/admin/dashboard");
+          break;
+        case "Organizzatore":
+          router.push("/organizzazione/dashboard");
+          break;
+        case "Partecipante":
+          router.push("/eventi");
+          break;
+        default:
+          throw new Error("Ruolo non riconosciuto.");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

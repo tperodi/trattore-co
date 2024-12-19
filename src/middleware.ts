@@ -18,7 +18,7 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
 
-    if (req.nextUrl.pathname.startsWith('/organizzazione/dashboard') && user.role !== 'organizzatore') {
+    if (req.nextUrl.pathname.startsWith('/organizzazione/dashboard') && user.role !== 'Organizzatore') {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
   } catch (error) {
