@@ -1,10 +1,29 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { FaBars, FaTimes, FaUserCircle } from "react-icons/fa";
+import Cookies from "js-cookie";
 
 const Navbar: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Stato per l'username preso dal cookie
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    const userCookie = Cookies.get("user");
+    console.log("Cookie trovato:", userCookie); // Debug
+    if (userCookie) {
+      try {
+        const user = JSON.parse(userCookie);
+        setUsername(user.username || "");
+        console.log("Username estratto:", user.username); // Debug
+      } catch (error) {
+        console.error("Errore nel parsing del cookie user:", error);
+      }
+    }
+  }, []);
+  
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -40,10 +59,27 @@ const Navbar: React.FC = () => {
         </ul>
 
         {/* Icona di Login - Destra */}
-        <div className="hidden md:block">
-          <Link href="/auth/login" className="text-gray-700 hover:text-blue-500 flex items-center" title="Login">
-            <FaUserCircle className="text-2xl" />
-          </Link>
+        <div className="hidden md:flex items-center space-x-2">
+          {username ? (
+            <>
+              <span className="text-gray-700">{username}</span>
+              <Link
+                href="/auth/profile"
+                className="text-gray-700 hover:text-blue-500 flex items-center"
+                title="Profilo"
+              >
+                <FaUserCircle className="text-2xl" />
+              </Link>
+            </>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="text-gray-700 hover:text-blue-500 flex items-center"
+              title="Login"
+            >
+              <FaUserCircle className="text-2xl" />
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Icon */}
@@ -56,25 +92,55 @@ const Navbar: React.FC = () => {
       {menuOpen && (
         <ul className="md:hidden bg-white w-full flex flex-col items-center py-6 space-y-4 shadow-lg">
           <li>
-            <Link href="/" className="cursor-pointer text-gray-700 hover:text-blue-500" onClick={toggleMenu}>
+            <Link
+              href="/"
+              className="cursor-pointer text-gray-700 hover:text-blue-500"
+              onClick={toggleMenu}
+            >
               Home
             </Link>
           </li>
           <li>
-            <Link href="/#features" className="cursor-pointer text-gray-700 hover:text-blue-500" onClick={toggleMenu}>
+            <Link
+              href="/#features"
+              className="cursor-pointer text-gray-700 hover:text-blue-500"
+              onClick={toggleMenu}
+            >
               Perché Noi
             </Link>
           </li>
           <li>
-            <Link href="/#testimonials" className="cursor-pointer text-gray-700 hover:text-blue-500" onClick={toggleMenu}>
+            <Link
+              href="/#testimonials"
+              className="cursor-pointer text-gray-700 hover:text-blue-500"
+              onClick={toggleMenu}
+            >
               Testimonial
             </Link>
           </li>
           <li>
-            <Link href="/auth/login" className="cursor-pointer text-gray-700 hover:text-blue-500 flex items-center" onClick={toggleMenu}>
-              <FaUserCircle className="text-2xl" />
-              <span className="ml-2">Login</span>
-            </Link>
+            {username ? (
+              <>
+                <span className="text-gray-700">{username}</span>
+                <Link
+                  href="/auth/profile"
+                  className="cursor-pointer text-gray-700 hover:text-blue-500 flex items-center"
+                  onClick={toggleMenu}
+                >
+                  <FaUserCircle className="text-2xl" />
+                  <span className="ml-2">Profilo</span>
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="cursor-pointer text-gray-700 hover:text-blue-500 flex items-center"
+                onClick={toggleMenu}
+              >
+                <FaUserCircle className="text-2xl" />
+                <span className="ml-2">Login</span>
+              </Link>
+            )}
           </li>
         </ul>
       )}
