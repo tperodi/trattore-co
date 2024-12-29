@@ -187,7 +187,9 @@ const Page: React.FC = () => {
       }
     }
   };
-  
+  const handleCancelEvent = () => {
+    setSelectedEvent(null);
+  };
 
   return (
     <>
@@ -277,6 +279,7 @@ const Page: React.FC = () => {
                 event={selectedEvent} 
                 onClose={() => setSelectedEvent(null)} 
                 onBook={handleBookEvent} 
+                onCancel={handleCancelEvent} 
               />
             )}
 
