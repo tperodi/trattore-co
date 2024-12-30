@@ -1,111 +1,79 @@
 "use client";
-
-import React, { useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
-import GestioneUtenti from "./GestioneUtenti";
-import GestionePermessi from "./GestionePermessi";
+import React, { useState, useEffect } from "react";
 import { Pie } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
-// Registra gli elementi necessari per i grafici
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const AdminDashboard: React.FC = () => {
-  const [currentView, setCurrentView] = useState<string>("dashboard");
-
-  const renderContent = () => {
-    switch (currentView) {
-      case "gestione-utenti":
-        return <GestioneUtenti />;
-      case "gestione-permessi":
-        return <GestionePermessi />;
-      case "dashboard":
-      default:
-        return (
-          <>
-            <h1 className="text-2xl font-bold mb-4">Organizzatore Dashboard</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white shadow rounded-lg p-4">
-                <h2 className="text-lg font-semibold mb-4">Iscrizioni ai Corsi</h2>
-                <Pie
-                  data={{
-                    labels: ["Corso A", "Corso B", "Corso C", "Corso D"],
-                    datasets: [
-                      {
-                        label: "Iscritti",
-                        data: [120, 90, 60, 30],
-                        backgroundColor: [
-                          "#4CAF50",
-                          "#FF9800",
-                          "#F44336",
-                          "#2196F3",
-                        ],
-                        borderColor: [
-                          "#4CAF50",
-                          "#FF9800",
-                          "#F44336",
-                          "#2196F3",
-                        ],
-                        borderWidth: 1,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    plugins: {
-                      legend: {
-                        position: "bottom",
-                      },
-                    },
-                  }}
-                />
-              </div>
-              <div className="bg-white shadow rounded-lg p-4">
-                <h2 className="text-lg font-semibold mb-4">Confronto Partecipanti</h2>
-                <Pie
-                  data={{
-                    labels: ["Partecipanti Attivi", "Partecipanti Non Attivi"],
-                    datasets: [
-                      {
-                        label: "Partecipanti",
-                        data: [200, 50],
-                        backgroundColor: ["#4CAF50", "#F44336"],
-                        borderColor: ["#4CAF50", "#F44336"],
-                        borderWidth: 1,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    plugins: {
-                      legend: {
-                        position: "bottom",
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </div>
-          </>
-        );
-    }
-  };
-
-  return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar onNavigate={setCurrentView} currentView={currentView} />
-      <div className="flex-1 flex flex-col">
-        <Navbar />
-        <div className="flex-1 p-6 overflow-y-auto">{renderContent()}</div>
-      </div>
-    </div>
-  );
+type EventData = {
+    titolo: string;
+    capienza: number;
+    stato: string;
+    prenotazioni: number;
 };
 
-export default AdminDashboard;
+const Dashboard = () => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [data, setData] = useState<EventData[] | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch("/api/AdminDashboard/events-more-book");
+                if (!response.ok) throw new Error("Errore nel caricamento dei dati");
+                const result = await response.json();
+                if (!result.events) throw new Error("Dati degli eventi mancanti dall'API");
+                setData(result.events);
+            } catch (err) {
+                setError((err as Error).message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    if (isLoading) return <div className="p-6 text-center">Caricamento in corso...</div>;
+    if (error) return <div className="p-6 text-center text-red-500">Errore: {error}</div>;
+
+    const topEvents = data?.slice(0, 5) || [];
+
+    return (
+        <div className="p-6 space-y-6">
+            <h1 className="text-3xl font-bold text-gray-800">Dashboard Insights</h1>
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white shadow-lg rounded-lg p-6">
+                    <h2 className="text-lg font-medium mb-4">Top 5 Eventi per Prenotazioni</h2>
+                    <Pie
+                        data={{
+                            labels: topEvents.map(event => event.titolo),
+                            datasets: [
+                                {
+                                    label: "Prenotazioni",
+                                    data: topEvents.map(event => event.prenotazioni),
+                                    backgroundColor: ["#36A2EB", "#FFCE56", "#FF6384", "#4BC0C0", "#66BB6A"],
+                                },
+                            ],
+                        }}
+                        options={{ responsive: true, plugins: { legend: { position: "bottom" } } }}
+                    />
+                </div>
+                <div className="bg-white shadow-lg rounded-lg p-6">
+                    <h2 className="text-lg font-medium mb-4">Capacità e Stato Eventi</h2>
+                    <ul className="space-y-2">
+                        {topEvents.map(event => (
+                            <li key={event.titolo} className="flex justify-between">
+                                <span className="font-medium text-gray-700">{event.titolo}</span>
+                                <span className="text-gray-500">Capienza: {event.capienza} | Stato: {event.stato}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </section>
+        </div>
+    );
+};
+
+export default Dashboard;

@@ -2,20 +2,20 @@
 import React from "react";
 import Sidebar from "@/components/Admin/Sidebar";
 import Navbar from "@/components/Admin/Navbar";
-import AdminDashboard from "@/components/Admin/AdminDashboard";
+import GestioneUtenti from "@/components/Admin/GestioneUtenti";
 
-const DashboardPage = () => {
+const GestioneUtentiPage = () => {
     return (
         <div className="flex h-screen bg-gray-50">
             <Sidebar />
             <div className="flex-1 flex flex-col">
                 <Navbar />
                 <main className="p-6 flex-1 overflow-y-auto">
-                    <AdminDashboard />
+                    <GestioneUtenti />
                 </main>
             </div>
         </div>
     );
 };
 
-export default DashboardPage;
+export default GestioneUtentiPage;

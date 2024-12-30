@@ -1,69 +1,195 @@
 "use client";
+import React, { useState, useEffect } from "react";
+import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
+import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
 
-import React, { useState } from "react";
+type User = {
+    idu: number;
+    nome: string;
+    cognome: string;
+    email: string;
+    ruolo: string;
+};
 
-interface User {
-  id: number;
-  nome: string;
-  cognome: string;
-  email: string;
-  ruolo: string;
-}
+const GestionePermessi = () => {
+    const [users, setUsers] = useState<User[]>([]);
+    const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [error, setError] = useState<string | null>(null);
+    const [editedRoles, setEditedRoles] = useState<Record<number, string>>({});
 
-const initialUsers: User[] = [
-  { id: 1, nome: "Mario", cognome: "Rossi", email: "mario.rossi@example.com", ruolo: "Partecipante" },
-  { id: 2, nome: "Luisa", cognome: "Bianchi", email: "luisa.bianchi@example.com", ruolo: "Organizzatore" },
-  { id: 3, nome: "Alessandro", cognome: "Verdi", email: "alessandro.verdi@example.com", ruolo: "Admin" },
-];
+    const usersPerPage = 10;
 
-const GestionePermessi: React.FC = () => {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await fetch("/api/AdminDashboard/getUsers");
+                if (!response.ok) {
+                    throw new Error("Errore nel caricamento degli utenti");
+                }
+                const data: User[] = await response.json();
+                data.sort((a, b) => a.nome.localeCompare(b.nome));
+                setUsers(data);
+                setFilteredUsers(data);
+            } catch (err) {
+                setError((err as Error).message);
+            }
+        };
 
-  const handleRoleChange = (id: number, newRole: string) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) => (user.id === id ? { ...user, ruolo: newRole } : user))
-    );
-  };
+        fetchUsers();
+    }, []);
 
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Gestione Permessi</h2>
-      <table className="table-auto w-full bg-white shadow rounded-lg">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">Nome</th>
-            <th className="px-4 py-2">Email</th>
-            <th className="px-4 py-2">Ruolo</th>
-            <th className="px-4 py-2">Azioni</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td className="border px-4 py-2">{user.nome} {user.cognome}</td>
-              <td className="border px-4 py-2">{user.email}</td>
-              <td className="border px-4 py-2">
-                <select
-                  value={user.ruolo}
-                  onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                  className="border rounded px-2 py-1"
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const term = e.target.value.toLowerCase();
+        setSearchTerm(term);
+
+        const filtered = users.filter(user =>
+            `${user.nome} ${user.cognome}`.toLowerCase().includes(term)
+        );
+        setFilteredUsers(filtered);
+        setCurrentPage(1); // Reset alla prima pagina
+    };
+
+    const handleRoleChangeLocal = (idu: number, newRole: string) => {
+        setEditedRoles((prev) => ({ ...prev, [idu]: newRole }));
+    };
+
+    const handleRoleChangeSave = async (idu: number) => {
+        const newRole = editedRoles[idu];
+        if (!newRole) return;
+
+        try {
+            const response = await fetch(`/api/AdminDashboard/change-role`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ idu, newRole }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Errore sconosciuto");
+            }
+
+            // Aggiorna lo stato lato client solo dopo una risposta positiva
+            setUsers((prevUsers) =>
+                prevUsers.map((user) =>
+                    user.idu === idu ? { ...user, ruolo: newRole } : user
+                )
+            );
+
+            setFilteredUsers((prevUsers) =>
+                prevUsers.map((user) =>
+                    user.idu === idu ? { ...user, ruolo: newRole } : user
+                )
+            );
+
+            // Rimuovi il ruolo modificato temporaneamente dall'oggetto `editedRoles`
+            setEditedRoles((prev) => {
+                const updated = { ...prev };
+                delete updated[idu];
+                return updated;
+            });
+        } catch (error) {
+            console.error("Errore durante l'aggiornamento del ruolo:", error);
+            setError((error as Error).message);
+        }
+    };
+
+    const getPaginatedUsers = () => {
+        const startIndex = (currentPage - 1) * usersPerPage;
+        return filteredUsers.slice(startIndex, startIndex + usersPerPage);
+    };
+
+    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+    const handlePageChange = (direction: "next" | "prev") => {
+        if (direction === "next" && currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        } else if (direction === "prev" && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    if (error) return <div className="p-6 text-center text-red-500">Errore: {error}</div>;
+
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Gestione Permessi</h2>
+
+            {/* Barra di ricerca */}
+            <div className="mb-4">
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    placeholder="Cerca per nome..."
+                    className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+
+            {/* Tabella Responsiva */}
+            <Table className="w-full bg-white shadow-lg rounded-lg">
+                <Thead className="bg-gray-100">
+                    <Tr>
+                        <Th className="text-left px-4 py-2">Nome</Th>
+                        <Th className="text-left px-4 py-2">Email</Th>
+                        <Th className="text-left px-4 py-2">Ruolo</Th>
+                        <Th className="text-left px-4 py-2">Azioni</Th>
+                    </Tr>
+                </Thead>
+                <Tbody>
+                    {getPaginatedUsers().map(user => (
+                        <Tr key={user.idu} className="border-b last:border-b-0 hover:bg-gray-50">
+                            <Td className="px-4 py-3 font-medium text-gray-700">{user.nome} {user.cognome}</Td>
+                            <Td className="px-4 py-3 text-gray-600">{user.email}</Td>
+                            <Td className="px-4 py-3">
+                                <select
+                                    value={editedRoles[user.idu] || user.ruolo}
+                                    onChange={(e) => handleRoleChangeLocal(user.idu, e.target.value)}
+                                    className="w-full border rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="Partecipante">Partecipante</option>
+                                    <option value="Organizzatore">Organizzatore</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </Td>
+                            <Td className="px-4 py-3">
+                                <button
+                                    onClick={() => handleRoleChangeSave(user.idu)}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                                    disabled={!editedRoles[user.idu]}
+                                >
+                                    Salva
+                                </button>
+                            </Td>
+                        </Tr>
+                    ))}
+                </Tbody>
+            </Table>
+
+            {/* Paginazione */}
+            <div className="mt-4 flex justify-between items-center">
+                <button
+                    onClick={() => handlePageChange("prev")}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:opacity-50"
                 >
-                  <option value="Partecipante">Partecipante</option>
-                  <option value="Organizzatore">Organizzatore</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </td>
-              <td className="border px-4 py-2">
-                <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                  Salva
+                    Precedente
                 </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+                <span className="text-gray-700">
+                    Pagina {currentPage} di {totalPages}
+                </span>
+                <button
+                    onClick={() => handlePageChange("next")}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:opacity-50"
+                >
+                    Successiva
+                </button>
+            </div>
+        </div>
+    );
 };
 
 export default GestionePermessi;

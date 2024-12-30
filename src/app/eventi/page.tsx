@@ -48,7 +48,7 @@ const Page: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch('/api/getEvents');
+        const response = await fetch('/api/events/getEvents');
         if (!response.ok) {
           throw new Error('Errore durante il recupero degli eventi.');
         }
