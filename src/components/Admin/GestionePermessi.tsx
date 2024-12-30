@@ -51,51 +51,6 @@ const GestionePermessi = () => {
         setCurrentPage(1); // Reset alla prima pagina
     };
 
-    const handleRoleChangeLocal = (idu: number, newRole: string) => {
-        setEditedRoles((prev) => ({ ...prev, [idu]: newRole }));
-    };
-
-    const handleRoleChangeSave = async (idu: number) => {
-        const newRole = editedRoles[idu];
-        if (!newRole) return;
-
-        try {
-            const response = await fetch(`/api/AdminDashboard/change-role`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ idu, newRole }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Errore sconosciuto");
-            }
-
-            // Aggiorna lo stato lato client solo dopo una risposta positiva
-            setUsers((prevUsers) =>
-                prevUsers.map((user) =>
-                    user.idu === idu ? { ...user, ruolo: newRole } : user
-                )
-            );
-
-            setFilteredUsers((prevUsers) =>
-                prevUsers.map((user) =>
-                    user.idu === idu ? { ...user, ruolo: newRole } : user
-                )
-            );
-
-            // Rimuovi il ruolo modificato temporaneamente dall'oggetto `editedRoles`
-            setEditedRoles((prev) => {
-                const updated = { ...prev };
-                delete updated[idu];
-                return updated;
-            });
-        } catch (error) {
-            console.error("Errore durante l'aggiornamento del ruolo:", error);
-            setError((error as Error).message);
-        }
-    };
-
     const getPaginatedUsers = () => {
         const startIndex = (currentPage - 1) * usersPerPage;
         return filteredUsers.slice(startIndex, startIndex + usersPerPage);
@@ -114,8 +69,8 @@ const GestionePermessi = () => {
     if (error) return <div className="p-6 text-center text-red-500">Errore: {error}</div>;
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Gestione Permessi</h2>
+        <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Gestione Permessi</h2>
 
             {/* Barra di ricerca */}
             <div className="mb-4">
@@ -132,36 +87,25 @@ const GestionePermessi = () => {
             <Table className="w-full bg-white shadow-lg rounded-lg">
                 <Thead className="bg-gray-100">
                     <Tr>
-                        <Th className="text-left px-4 py-2">Nome</Th>
-                        <Th className="text-left px-4 py-2">Email</Th>
-                        <Th className="text-left px-4 py-2">Ruolo</Th>
-                        <Th className="text-left px-4 py-2">Azioni</Th>
+                        <Th className="text-left px-2 sm:px-4 py-2">Nome</Th>
+                        <Th className="text-left px-2 sm:px-4 py-2">Email</Th>
+                        <Th className="text-left px-2 sm:px-4 py-2">Ruolo</Th>
                     </Tr>
                 </Thead>
                 <Tbody>
                     {getPaginatedUsers().map(user => (
                         <Tr key={user.idu} className="border-b last:border-b-0 hover:bg-gray-50">
-                            <Td className="px-4 py-3 font-medium text-gray-700">{user.nome} {user.cognome}</Td>
-                            <Td className="px-4 py-3 text-gray-600">{user.email}</Td>
-                            <Td className="px-4 py-3">
+                            <Td className="px-2 sm:px-4 py-3 font-medium text-gray-700">{user.nome} {user.cognome}</Td>
+                            <Td className="px-2 sm:px-4 py-3 text-gray-600">{user.email}</Td>
+                            <Td className="px-2 sm:px-4 py-3">
                                 <select
-                                    value={editedRoles[user.idu] || user.ruolo}
-                                    onChange={(e) => handleRoleChangeLocal(user.idu, e.target.value)}
+                                    value={user.ruolo}
                                     className="w-full border rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="Partecipante">Partecipante</option>
                                     <option value="Organizzatore">Organizzatore</option>
                                     <option value="Admin">Admin</option>
                                 </select>
-                            </Td>
-                            <Td className="px-4 py-3">
-                                <button
-                                    onClick={() => handleRoleChangeSave(user.idu)}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-                                    disabled={!editedRoles[user.idu]}
-                                >
-                                    Salva
-                                </button>
                             </Td>
                         </Tr>
                     ))}

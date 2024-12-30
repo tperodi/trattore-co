@@ -41,11 +41,11 @@ const Dashboard = () => {
     const topEvents = data?.slice(0, 5) || [];
 
     return (
-        <div className="p-6 space-y-6">
-            <h1 className="text-3xl font-bold text-gray-800">Dashboard Insights</h1>
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white shadow-lg rounded-lg p-6">
-                    <h2 className="text-lg font-medium mb-4">Top 5 Eventi per Prenotazioni</h2>
+        <div className="p-4 sm:p-6 md:p-8 space-y-6">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">Dashboard Insights</h1>
+            <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-white shadow-lg rounded-lg p-4">
+                    <h2 className="text-base sm:text-lg font-medium mb-2">Top 5 Eventi per Prenotazioni</h2>
                     <Pie
                         data={{
                             labels: topEvents.map(event => event.titolo),
@@ -61,16 +61,24 @@ const Dashboard = () => {
                     />
                 </div>
                 <div className="bg-white shadow-lg rounded-lg p-6">
-                    <h2 className="text-lg font-medium mb-4">Capacità e Stato Eventi</h2>
-                    <ul className="space-y-2">
-                        {topEvents.map(event => (
-                            <li key={event.titolo} className="flex justify-between">
-                                <span className="font-medium text-gray-700">{event.titolo}</span>
-                                <span className="text-gray-500">Capienza: {event.capienza} | Stato: {event.stato}</span>
-                            </li>
-                        ))}
-                    </ul>
+    <h2 className="text-lg font-medium mb-4">Capacità e Stato Eventi</h2>
+    <ul className="divide-y divide-gray-200">
+        {topEvents.map((event) => (
+            <li key={event.titolo} className="py-4">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <span className="block text-gray-800 font-semibold">{event.titolo}</span>
+                        <span className="block text-gray-500 text-sm">Stato: {event.stato}</span>
+                    </div>
+                    <span className="text-gray-600 text-sm">
+                        Capienza: <strong>{event.capienza}</strong>
+                    </span>
                 </div>
+            </li>
+        ))}
+    </ul>
+</div>
+
             </section>
         </div>
     );
