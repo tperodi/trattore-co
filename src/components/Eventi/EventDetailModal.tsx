@@ -57,38 +57,40 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-11/12 max-w-md shadow-lg">
-        <h2 className="text-2xl font-bold text-blue-600 mb-4">{event.title}</h2>
-        <p><strong>Data:</strong> {event.date}</p>
-        <p><strong>Luogo:</strong> {event.location}</p>
-        <p><strong>Categoria:</strong> {event.category}</p>
-        <p className="my-4">{event.description}</p>
-        <div className="flex justify-end space-x-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
-            disabled={isLoading}
-          >
-            Chiudi
-          </button>
-          <button
-            onClick={() => onBook(event.id)}
-            className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-700"
-            disabled={isLoading}
-          >
-            Prenota Evento
-          </button>
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700"
-            disabled={isLoading}
-          >
-            Annulla Prenotazione
-          </button>
-        </div>
-      </div>
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 px-4">
+  <div className="bg-white p-6 rounded-lg w-full max-w-lg shadow-lg">
+    <h2 className="text-2xl font-bold text-blue-600 mb-4 text-center">{event.title}</h2>
+    <div className="space-y-2">
+      <p><strong>Data:</strong> {event.date}</p>
+      <p><strong>Luogo:</strong> {event.location}</p>
+      <p><strong>Categoria:</strong> {event.category}</p>
+      <p className="my-4 text-gray-600">{event.description}</p>
     </div>
+    <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-2 mt-4">
+      <button
+        onClick={onClose}
+        className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 w-full sm:w-auto"
+        disabled={isLoading}
+      >
+        Chiudi
+      </button>
+      <button
+        onClick={() => onBook(event.id)}
+        className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-700 w-full sm:w-auto"
+        disabled={isLoading}
+      >
+        Prenota Evento
+      </button>
+      <button
+        onClick={handleCancel}
+        className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700 w-full sm:w-auto"
+        disabled={isLoading}
+      >
+        Annulla Prenotazione
+      </button>
+    </div>
+  </div>
+</div>
   );
 };
 
