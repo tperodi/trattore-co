@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
+import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
 
 interface Evento {
   ide: number;
@@ -20,25 +22,12 @@ const Dashboard: React.FC = () => {
   const [eventoSelezionato, setEventoSelezionato] = useState<Evento | null>(null);
 
   useEffect(() => {
-    // Fetch initial data for events
     const fetchEventi = async () => {
       try {
         const response = await fetch("/api/events/management-events");
         if (response.ok) {
           const data = await response.json();
-          setEventi(
-            data.events.map((event: Evento) => ({
-              ide: event.ide,
-              titolo: event.titolo,
-              data: event.data,
-              orario: event.orario,
-              luogo: event.luogo,
-              categoria: event.categoria,
-              descrizione: event.descrizione,
-              capienza: event.capienza,
-              stato: event.stato,
-            }))
-          );
+          setEventi(data.events);
         } else {
           console.error("Errore nel caricamento degli eventi.");
         }
@@ -51,17 +40,13 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const handleDelete = async (id: number) => {
-    const conferma = confirm("Sei sicuro di voler eliminare questo evento?");
-    if (conferma) {
+    if (confirm("Sei sicuro di voler eliminare questo evento?")) {
       try {
         const response = await fetch(`/api/events/management-events`, {
           method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ide: id }),
         });
-
         if (response.ok) {
           setEventi((prev) => prev.filter((evento) => evento.ide !== id));
           alert("Evento eliminato con successo!");
@@ -83,12 +68,9 @@ const Dashboard: React.FC = () => {
     try {
       const response = await fetch("/api/events/management-events", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedEvento),
       });
-
       if (response.ok) {
         setEventi((prev) =>
           prev.map((evento) => (evento.ide === updatedEvento.ide ? updatedEvento : evento))
@@ -134,39 +116,41 @@ const Dashboard: React.FC = () => {
                   required
                 />
               </div>
-              <div>
-                <label htmlFor="data" className="block text-sm font-medium text-gray-700">
-                  Data
-                </label>
-                <input
-                  type="date"
-                  id="data"
-                  value={eventoSelezionato?.data || ""}
-                  onChange={(e) =>
-                    setEventoSelezionato((prev) =>
-                      prev ? { ...prev, data: e.target.value } : null
-                    )
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="orario" className="block text-sm font-medium text-gray-700">
-                  Orario
-                </label>
-                <input
-                  type="time"
-                  id="orario"
-                  value={eventoSelezionato?.orario || ""}
-                  onChange={(e) =>
-                    setEventoSelezionato((prev) =>
-                      prev ? { ...prev, orario: e.target.value } : null
-                    )
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="data" className="block text-sm font-medium text-gray-700">
+                    Data
+                  </label>
+                  <input
+                    type="date"
+                    id="data"
+                    value={eventoSelezionato?.data || ""}
+                    onChange={(e) =>
+                      setEventoSelezionato((prev) =>
+                        prev ? { ...prev, data: e.target.value } : null
+                      )
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="orario" className="block text-sm font-medium text-gray-700">
+                    Orario
+                  </label>
+                  <input
+                    type="time"
+                    id="orario"
+                    value={eventoSelezionato?.orario || ""}
+                    onChange={(e) =>
+                      setEventoSelezionato((prev) =>
+                        prev ? { ...prev, orario: e.target.value } : null
+                      )
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
               </div>
               <div>
                 <label htmlFor="luogo" className="block text-sm font-medium text-gray-700">
@@ -235,41 +219,44 @@ const Dashboard: React.FC = () => {
         return (
           <div className="p-6 max-w-6xl mx-auto">
             <h1 className="text-3xl font-bold mb-6 text-center">Gestione Eventi</h1>
-            <table className="table-auto w-full bg-white shadow rounded-lg overflow-hidden">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="px-4 py-2 text-left">Nome</th>
-                  <th className="px-4 py-2 text-left">Data</th>
-                  <th className="px-4 py-2 text-left">Luogo</th>
-                  <th className="px-4 py-2 text-left">Categoria</th>
-                  <th className="px-4 py-2 text-center">Azioni</th>
-                </tr>
-              </thead>
-              <tbody>
-                {eventi.map((evento) => (
-                  <tr key={evento.ide} className="border-b">
-                    <td className="px-4 py-2">{evento.titolo}</td>
-                    <td className="px-4 py-2">{evento.data}</td>
-                    <td className="px-4 py-2">{evento.luogo}</td>
-                    <td className="px-4 py-2">{evento.categoria}</td>
-                    <td className="px-4 py-2 text-center">
-                      <button
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                        onClick={() => handleEdit(evento)}
-                      >
-                        Modifica
-                      </button>
-                      <button
-                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 ml-2"
-                        onClick={() => handleDelete(evento.ide)}
-                      >
-                        Elimina
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="bg-white shadow rounded-lg">
+              <Table className="w-full">
+                <Thead>
+                  <Tr className="bg-gray-200">
+                    <Th className="px-4 py-2 text-left">Nome</Th>
+                    <Th className="px-4 py-2 text-left">Data</Th>
+                    <Th className="px-4 py-2 text-left">Luogo</Th>
+                    <Th className="px-4 py-2 text-left">Categoria</Th>
+                    <Th className="px-4 py-2 text-center">Azioni</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {eventi.map((evento) => (
+                    <Tr key={evento.ide} className="border-b">
+                      <Td className="px-4 py-2">{evento.titolo}</Td>
+                      <Td className="px-4 py-2">{evento.data}</Td>
+                      <Td className="px-4 py-2">{evento.luogo}</Td>
+                      <Td className="px-4 py-2">{evento.categoria}</Td>
+                      <Td className="px-4 py-2 text-center">
+                        <button
+                          className="bg-blue-500
+                          text-white px-4 py-2 rounded hover:bg-blue-600"
+                          onClick={() => handleEdit(evento)}
+                        >
+                          Modifica
+                        </button>
+                        <button
+                          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 ml-2"
+                          onClick={() => handleDelete(evento.ide)}
+                        >
+                          Elimina
+                        </button>
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </div>
           </div>
         );
     }

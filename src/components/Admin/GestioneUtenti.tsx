@@ -1,7 +1,6 @@
 // GestioneUtenti.tsx con design ottimizzato per mobile
 "use client";
 import React, { useState, useEffect } from "react";
-import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
 import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
 
 interface User {

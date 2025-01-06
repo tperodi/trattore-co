@@ -17,7 +17,6 @@ const GestionePermessi = () => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [error, setError] = useState<string | null>(null);
-    const [editedRoles, setEditedRoles] = useState<Record<number, string>>({});
 
     const usersPerPage = 10;
 

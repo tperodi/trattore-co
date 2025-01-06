@@ -47,8 +47,8 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <div className="h-16 bg-white shadow flex items-center justify-between px-6">
-      <div>
+    <div className="h-16 bg-white shadow flex items-center justify-between px-6 lg:px-6">
+      <div className="flex-grow text-center lg:text-left lg:flex-none">
         <h1 className="text-xl font-bold">
           Benvenuto, {username ? username : "Organizzatore"}
         </h1>
