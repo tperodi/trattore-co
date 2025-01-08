@@ -6,7 +6,6 @@ interface EventData {
   date: string;
   location: string;
   category: string;
-  description: string;
 }
 
 interface EventListProps {
@@ -15,12 +14,16 @@ interface EventListProps {
 }
 
 const EventList: React.FC<EventListProps> = ({ events, onEventClick }) => {
+  if (events.length === 0) {
+    return <p className="text-center text-gray-500">Nessun evento trovato.</p>;
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {events.map((event) => (
         <div
           key={event.id}
-          className="border rounded-lg p-4 shadow hover:shadow-lg cursor-pointer bg-gray-50"
+          className="p-4 border rounded-lg shadow hover:shadow-lg cursor-pointer bg-white"
           onClick={() => onEventClick(event)}
         >
           <h3 className="text-xl font-bold mb-2 text-blue-600">{event.title}</h3>
