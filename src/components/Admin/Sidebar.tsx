@@ -20,11 +20,6 @@ const Sidebar: React.FC = () => {
       label: "Gestione Permessi",
       icon: <FiShield className="mr-3" />,
     },
-    {
-      href: "/admin/gestione-utenti",
-      label: "Gestione Utenti",
-      icon: <FiUsers className="mr-3" />,
-    },
   ];
 
   return (
@@ -53,7 +48,7 @@ const Sidebar: React.FC = () => {
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-center h-20 border-b border-green-500">
-          <h1 className="text-2xl font-bold">Admin</h1>
+          <Link href={"/"}><h1 className="text-2xl font-bold">EventiPrenota</h1></Link>
         </div>
 
         {/* Navigation Menu */}

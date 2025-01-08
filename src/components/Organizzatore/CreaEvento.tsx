@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Toaster, toast } from "react-hot-toast";
 
 const CreaEvento: React.FC = () => {
   const [titolo, setTitolo] = useState("");
@@ -49,22 +50,35 @@ const CreaEvento: React.FC = () => {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(`Errore: ${error.error}`);
+        toast.error(`Errore: ${error.error}`);
         return;
       }
 
       const result = await response.json();
-      alert('Corso creato con successo!');
+      toast.success('Evento creato con successo!');
       console.log(result);
+
+      // Resetta i campi del form
+      setTitolo("");
+      setDescrizione("");
+      setData("");
+      setOrario("");
+      setLuogo("");
+      setCapienza("");
+      setStato("Attivo");
+      setCategoria("");
     } catch (err) {
-      console.error('Errore durante la creazione del corso:', err);
-      alert('Errore durante la creazione del corso.');
+      console.error('Errore durante la creazione dell\'evento:', err);
+      toast.error('Errore durante la creazione dell\'evento.');
     }
   };
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Crea un Nuovo Evento</h2>
+      {/* Toast Container */}
+      <Toaster position="top-right" reverseOrder={false} />
+      
+      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Crea un Nuovo Evento</h2>
       <form onSubmit={handleSubmit} className="bg-white shadow-lg rounded-lg p-8 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
@@ -196,7 +210,7 @@ const CreaEvento: React.FC = () => {
             type="submit"
             className="px-6 py-3 bg-green-600 text-white font-semibold rounded-md shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
-            Crea Corso
+            Crea Evento
           </button>
         </div>
       </form>

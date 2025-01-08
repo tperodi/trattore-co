@@ -49,7 +49,7 @@ const Sidebar: React.FC = () => {
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-center h-20 border-b border-green-500">
-          <h1 className="text-2xl font-bold">Organizzatore</h1>
+        <Link href={"/"}><h1 className="text-2xl font-bold">EventiPrenota</h1></Link>
         </div>
 
         {/* Navigation Menu */}

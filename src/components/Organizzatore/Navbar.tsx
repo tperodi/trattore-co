@@ -37,6 +37,7 @@ const Navbar: React.FC = () => {
 
       if (response.ok) {
         Cookies.remove("user"); // Rimuove il cookie dell'utente
+        localStorage.clear();
         router.push("/"); // Reindirizza alla pagina principale
       } else {
         console.error("Errore durante il logout.");

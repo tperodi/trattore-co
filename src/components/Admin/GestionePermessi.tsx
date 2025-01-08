@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
 import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
+import { Toaster, toast } from "react-hot-toast";
 
 type User = {
     idu: number;
@@ -17,6 +18,7 @@ const GestionePermessi = () => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [error, setError] = useState<string | null>(null);
+    const [editedRoles, setEditedRoles] = useState<{ [key: number]: string }>({});
 
     const usersPerPage = 10;
 
@@ -47,7 +49,47 @@ const GestionePermessi = () => {
             `${user.nome} ${user.cognome}`.toLowerCase().includes(term)
         );
         setFilteredUsers(filtered);
-        setCurrentPage(1); // Reset alla prima pagina
+        setCurrentPage(1);
+    };
+
+    const handleRoleChange = (userId: number, newRole: string) => {
+        setEditedRoles(prev => ({ ...prev, [userId]: newRole }));
+    };
+
+    const saveRoleChange = async (userId: number) => {
+        const newRole = editedRoles[userId];
+        try {
+            const response = await fetch("/api/AdminDashboard/change-role", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ idu: userId, newRole }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Errore durante il salvataggio");
+            }
+
+            // Aggiorna lo stato locale
+            setUsers(users.map(user =>
+                user.idu === userId ? { ...user, ruolo: newRole } : user
+            ));
+            setFilteredUsers(filteredUsers.map(user =>
+                user.idu === userId ? { ...user, ruolo: newRole } : user
+            ));
+            setEditedRoles(prev => {
+                const { [userId]: _, ...rest } = prev;
+                return rest;
+            });
+
+            // Mostra un toast di successo
+            toast.success("Ruolo aggiornato con successo!");
+        } catch (err) {
+            setError((err as Error).message);
+            toast.error("Errore durante il salvataggio del ruolo.");
+        }
     };
 
     const getPaginatedUsers = () => {
@@ -69,9 +111,11 @@ const GestionePermessi = () => {
 
     return (
         <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+            {/* Toast Container */}
+            <Toaster position="top-right" reverseOrder={false} />
+
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Gestione Permessi</h2>
 
-            {/* Barra di ricerca */}
             <div className="mb-4">
                 <input
                     type="text"
@@ -82,13 +126,13 @@ const GestionePermessi = () => {
                 />
             </div>
 
-            {/* Tabella Responsiva */}
             <Table className="w-full bg-white shadow-lg rounded-lg">
                 <Thead className="bg-gray-100">
                     <Tr>
                         <Th className="text-left px-2 sm:px-4 py-2">Nome</Th>
                         <Th className="text-left px-2 sm:px-4 py-2">Email</Th>
                         <Th className="text-left px-2 sm:px-4 py-2">Ruolo</Th>
+                        <Th className="text-left px-2 sm:px-4 py-2">Azioni</Th>
                     </Tr>
                 </Thead>
                 <Tbody>
@@ -98,7 +142,8 @@ const GestionePermessi = () => {
                             <Td className="px-2 sm:px-4 py-3 text-gray-600">{user.email}</Td>
                             <Td className="px-2 sm:px-4 py-3">
                                 <select
-                                    value={user.ruolo}
+                                    value={editedRoles[user.idu] ?? user.ruolo}
+                                    onChange={e => handleRoleChange(user.idu, e.target.value)}
                                     className="w-full border rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="Partecipante">Partecipante</option>
@@ -106,12 +151,20 @@ const GestionePermessi = () => {
                                     <option value="Admin">Admin</option>
                                 </select>
                             </Td>
+                            <Td className="px-2 sm:px-4 py-3">
+                                <button
+                                    onClick={() => saveRoleChange(user.idu)}
+                                    disabled={!editedRoles[user.idu]}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                                >
+                                    Salva
+                                </button>
+                            </Td>
                         </Tr>
                     ))}
                 </Tbody>
             </Table>
 
-            {/* Paginazione */}
             <div className="mt-4 flex justify-between items-center">
                 <button
                     onClick={() => handlePageChange("prev")}

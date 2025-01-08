@@ -66,7 +66,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       email: user.email,
       role: user.ruolo,
     }), {
-      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
