@@ -17,8 +17,9 @@ interface EventData {
   location: string;
   description: string; // Ora opzionale
   category: string;
+  capacity: number; // Nuova proprietà per la capienza massima
+  currentBookings: number; // Nuova proprietà per il numero di prenotazioni
 }
-
 
 interface ApiEvent {
   ide?: number;
@@ -27,12 +28,17 @@ interface ApiEvent {
   luogo?: string;
   descrizione?: string;
   categoria?: string;
+  capienza?: number; // Nuova proprietà per la capienza massima
+  prenotazioni?: number; // Nuova proprietà per il numero di prenotazioni
 }
+
 
 interface Booking {
   evento: Evento;
 }
 interface Evento {
+  prenotazioni: number;
+  capienza: number;
   ide: number;
   titolo: string;
   data: string;
@@ -66,7 +72,8 @@ const Page: React.FC = () => {
           throw new Error('Errore durante il recupero degli eventi.');
         }
         const data = await response.json();
-
+        console.log('Dati restituiti dall\'API:', data);
+    
         const mappedEvents: EventData[] = data.events.map((event: ApiEvent) => ({
           id: event.ide || 0,
           title: event.titolo || 'Titolo non disponibile',
@@ -74,9 +81,30 @@ const Page: React.FC = () => {
           location: event.luogo || 'Località non specificata',
           description: event.descrizione || 'Descrizione non disponibile',
           category: event.categoria || 'Categoria non specificata',
+          capacity: event.capienza || 0, // Aggiungi la capienza massima
+          currentBookings: event.prenotazioni || 0, // Aggiungi il numero di prenotazioni correnti
         }));
-
-        setEvents(mappedEvents);
+    
+        console.log(mappedEvents);
+    
+        // Ordinare gli eventi: attivi e non pieni -> pieni -> passati
+        const sortedEvents = mappedEvents.sort((a, b) => {
+          const isAPast = new Date(a.date) < new Date();
+          const isBPast = new Date(b.date) < new Date();
+          const isAFull = a.currentBookings >= a.capacity;
+          const isBFull = b.currentBookings >= b.capacity;
+    
+          // Ordinamento personalizzato
+          if (isAPast !== isBPast) {
+            return isAPast ? 1 : -1; // Passati dopo gli altri
+          } else if (isAFull !== isBFull) {
+            return isAFull ? 1 : -1; // Pieni dopo quelli non pieni
+          } else {
+            return new Date(a.date).getTime() - new Date(b.date).getTime(); // Ordinamento per data
+          }
+        });
+    
+        setEvents(sortedEvents);
       } catch (err: unknown) {
         console.error('Errore nella fetch:', err);
         setError(
@@ -86,6 +114,8 @@ const Page: React.FC = () => {
         setLoading(false);
       }
     };
+    
+    
     const fetchBookedEvents = async () => {
       try {
         const userId = Number(localStorage.getItem("userId"));
@@ -103,7 +133,10 @@ const Page: React.FC = () => {
           location: booking.evento.luogo,
           description: booking.evento.descrizione || "Descrizione non disponibile",
           category: booking.evento.categoria || "Non specificata",
+          capacity: booking.evento.capienza || 0, // Capienza massima, con valore predefinito
+          currentBookings: booking.evento.prenotazioni || 0, // Prenotazioni correnti, con valore predefinito
         }));
+        
     
         setBookedEvents(mappedBookedEvents);
       } catch (err) {
@@ -180,18 +213,17 @@ const Page: React.FC = () => {
     }
     return true; // Mostra tutti gli eventi se il filtro non è attivo
   });
-
-
-
+  // .filter((event) => {
+  //   // Se vuoi escludere gli eventi pieni
+  //   return event.currentBookings < event.capacity;
+  // });
 
 
 
   const handleBookEvent = async (eventId: number) => {
     try {
-      // Recupera userId da localStorage e lo converte in numero
       const userId = Number(localStorage.getItem("userId"));
   
-      // Verifica che user_id sia un numero valido
       if (isNaN(userId)) {
         throw new Error("User ID non valido.");
       }
@@ -209,13 +241,27 @@ const Page: React.FC = () => {
       });
   
       if (!response.ok) {
-        // Analizza la risposta del server per ottenere dettagli sull'errore
         const errorData = await response.json();
         throw new Error(errorData.error || 'Errore durante la prenotazione dell\'evento.');
       }
   
       // Se la chiamata va a buon fine
       toast.success('Evento prenotato con successo!');
+  
+      // Aggiorna lo stato degli eventi prenotati
+      const bookedEvent = events.find((event) => event.id === eventId);
+  
+      if (bookedEvent) {
+        setBookedEvents((prev) => [...prev, bookedEvent]);
+      }
+  
+      // Aggiorna lo stato dell'evento
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId ? { ...event, isBooked: true } : event
+        )
+      );
+  
       setSelectedEvent(null);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -227,9 +273,45 @@ const Page: React.FC = () => {
       }
     }
   };
-  const handleCancelEvent = () => {
-    setSelectedEvent(null);
+  
+  const handleCancelBooking = async (eventId: number) => {
+    try {
+      const userId = Number(localStorage.getItem("userId"));
+      if (isNaN(userId)) {
+        throw new Error("User ID non valido.");
+      }
+  
+      const response = await fetch("/api/events/cancel-booking", {
+        method: "DELETE", // Usa "DELETE" se richiesto dall'API
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ eventId, userId }),
+      });
+      const responseText = await response.text();
+      console.log("Response Text:", responseText);
+      if (!response.ok) {
+        // Verifica il tipo di errore
+        const errorText = await response.text();
+        throw new Error(errorText || "Errore sconosciuto durante la richiesta.");
+      }
+  
+      toast.success("Prenotazione annullata con successo!");
+  
+      // Aggiorna lo stato dell'UI
+      setBookedEvents((prev) => prev.filter((event) => event.id !== eventId));
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId ? { ...event, isBooked: false } : event
+        )
+      );
+  
+      setSelectedEvent(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Errore sconosciuto.");
+    }
   };
+  
 
   return (
     <>
@@ -350,18 +432,75 @@ const Page: React.FC = () => {
             </button>
           </div>
         </div>
-
+        
         {/* Lista degli eventi */}
+
         <EventList
-  events={filteredEvents} // Eventi filtrati
-  bookedEvents={bookedEvents.map((event) => event.id)} // IDs degli eventi prenotati
-  onEventClick={(event) =>
-    setSelectedEvent({
-      ...event,
-      description: event.description || "Descrizione non disponibile",
-    })
-  }
+  events={filteredEvents}
+  bookedEvents={bookedEvents.map((event) => event.id)}
+  onEventClick={(event) => {
+    if (new Date(event.date) >= new Date()) {
+      setSelectedEvent({
+        ...event,
+        description: event.description || "Descrizione non disponibile",
+        capacity: event.capacity,
+        currentBookings: event.currentBookings,
+      });
+    }
+  }}
+  renderEvent={(event) => {
+    const isFull = event.currentBookings >= event.capacity;
+    const isPastEvent = new Date(event.date) < new Date();
+    const isBooked = bookedEvents.some((bookedEvent) => bookedEvent.id === event.id);
+
+    return (
+      <div
+        key={event.id}
+        className={`p-4 rounded-lg mb-4 shadow ${
+          isPastEvent
+            ? 'bg-gray-300 text-gray-500 cursor-pointer'
+            : isFull
+            ? 'bg-red-100 border-red-500 cursor-pointer'
+            : isBooked
+            ? 'bg-green-100 border-green-500 cursor-pointer'
+            : 'bg-white text-black cursor-pointer'
+        }`}
+        onClick={() => {
+          setSelectedEvent({
+            ...event,
+            description: event.description || "Descrizione non disponibile",
+            capacity: event.capacity,
+            currentBookings: event.currentBookings,
+          });
+        }}
+      >
+        <h3 className={`font-semibold ${isFull ? 'text-red-600' : ''}`}>
+          {event.title}
+        </h3>
+        <p>{event.date}</p>
+        <p>{event.location}</p>
+        <p>
+          Prenotazioni: {event.currentBookings}/{event.capacity}
+        </p>
+        {isFull && (
+          <p className="text-sm text-red-500 font-semibold">
+            Evento al completo
+          </p>
+        )}
+        {isBooked && (
+          <p className="text-sm text-green-500 font-semibold">Prenotato</p>
+        )}
+        {isPastEvent && (
+          <p className="text-sm text-red-500 font-semibold">Evento Passato</p>
+        )}
+      </div>
+    );
+  }}
 />
+
+
+
+
 
 
 
@@ -371,7 +510,7 @@ const Page: React.FC = () => {
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
             onBook={handleBookEvent}
-            onCancel={handleCancelEvent}
+            onCancel={handleCancelBooking}
           />
         )}
 

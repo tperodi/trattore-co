@@ -15,17 +15,34 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
-      // Query per ottenere gli eventi
+      // Query per ottenere gli eventi con il conteggio delle prenotazioni
       const { data, error } = await supabase
-        .from('evento') // Nome della tabella
-        .select('*'); // Seleziona tutte le colonne
+        .from('evento')
+        .select(`
+          ide,
+          titolo,
+          data,
+          luogo,
+          descrizione,
+          categoria,
+          capienza,
+          stato,
+          prenotazioni:prenotazione(ide)
+        `);
 
       if (error) {
         return res.status(400).json({ error: error.message });
       }
 
-      return res.status(200).json({ events: data });
+      // Trasforma i dati per includere il conteggio delle prenotazioni
+      const events = data.map(event => ({
+        ...event,
+        prenotazioni: event.prenotazioni ? event.prenotazioni.length : 0, // Conteggio delle prenotazioni
+      }));
+
+      return res.status(200).json({ events });
     } catch (err) {
+      console.error('Errore del server:', err);
       return res.status(500).json({ error: 'Errore del server', details: err });
     }
   } else {

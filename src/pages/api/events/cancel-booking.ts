@@ -15,18 +15,20 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "DELETE") {
     res.setHeader("Allow", ["DELETE"]);
-    return res.status(405).end(`Metodo ${req.method} non consentito`);
+    return res.status(405).json({ error: `Metodo ${req.method} non consentito.` });
   }
 
   const { userId, eventId }: { userId: string; eventId: number } = req.body;
 
   // Validazione dei dati
   if (!userId || !eventId) {
-    return res.status(400).json({ error: "ID utente e ID evento sono obbligatori." });
+    return res.status(400).json({
+      error: "Entrambi ID utente (userId) e ID evento (eventId) sono obbligatori.",
+    });
   }
 
   try {
-    // Controlla se la prenotazione esiste
+    // Verifica se la prenotazione esiste
     const { data: booking, error: bookingError } = await supabase
       .from("prenotazione")
       .select("idp")
@@ -35,10 +37,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .single();
 
     if (bookingError || !booking) {
-      return res.status(404).json({ error: "Prenotazione non trovata." });
+      return res
+        .status(404)
+        .json({ error: "Prenotazione non trovata o già cancellata." });
     }
 
-    // Cancella la prenotazione
+    // Esegui la cancellazione
     const { error: deleteError } = await supabase
       .from("prenotazione")
       .delete()
@@ -46,13 +50,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq("ide", eventId);
 
     if (deleteError) {
-      console.error("Errore durante la cancellazione della prenotazione:", deleteError.message);
-      return res.status(500).json({ error: "Errore del server durante la cancellazione della prenotazione." });
+      console.error(
+        "Errore durante la cancellazione della prenotazione:",
+        deleteError.message
+      );
+      return res.status(500).json({
+        error: "Errore del server durante la cancellazione della prenotazione.",
+      });
     }
 
     return res.status(200).json({ message: "Prenotazione cancellata con successo." });
   } catch (err) {
     console.error("Errore durante la cancellazione della prenotazione:", err);
-    return res.status(500).json({ error: "Errore del server." });
+    return res.status(500).json({ error: "Errore interno del server." });
   }
 }

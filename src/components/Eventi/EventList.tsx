@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 
 interface EventData {
+  currentBookings: number;
+  capacity: number;
   description: string;
   id: number;
   title: string;
@@ -13,6 +15,7 @@ interface EventListProps {
   events: EventData[];
   bookedEvents?: number[]; // IDs degli eventi prenotati
   onEventClick: (event: EventData) => void;
+  renderEvent?: (event: EventData) => React.ReactNode; // Aggiunta la funzione di rendering personalizzato
 }
 
 const EventList: React.FC<EventListProps> = ({
@@ -47,13 +50,21 @@ const EventList: React.FC<EventListProps> = ({
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {currentEvents.map((event) => {
+          const isPastEvent = new Date(event.date) < new Date();
+          const isFull = event.currentBookings >= event.capacity;
           const isBooked = bookedEvents.includes(event.id);
 
           return (
             <div
               key={event.id}
-              className={`p-4 border rounded-lg shadow hover:shadow-lg cursor-pointer bg-white ${
-                isBooked ? "border-blue-500 bg-blue-50" : "border-gray-300"
+              className={`p-4 border rounded-lg shadow hover:shadow-lg ${
+                isPastEvent
+                  ? "bg-gray-200 text-gray-500"
+                  : isFull
+                  ? "bg-red-100 border-red-500"
+                  : isBooked
+                  ? "bg-green-100 border-green-500"
+                  : "bg-white"
               }`}
               onClick={() => onEventClick(event)}
             >
@@ -66,12 +77,20 @@ const EventList: React.FC<EventListProps> = ({
               <p className="text-gray-500">
                 <strong>Luogo:</strong> {event.location}
               </p>
-              <p className="text-sm text-gray-400">
-                <strong>Categoria:</strong> {event.category || "Non specificata"}
-              </p>
-              {isBooked && (
+              <p className="text-gray-600">{event.description}</p>
+              {isFull && (
+                <p className="mt-2 text-sm text-red-500 font-semibold">
+                  Evento al completo
+                </p>
+              )}
+              {!isPastEvent && isBooked && (
                 <p className="mt-2 text-sm text-green-500 font-semibold">
-                  Prenotato
+                  Evento Prenotato
+                </p>
+              )}
+              {isPastEvent && (
+                <p className="mt-2 text-sm text-red-500 font-semibold">
+                  Evento Passato
                 </p>
               )}
             </div>

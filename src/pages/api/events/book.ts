@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Validazione dei dati
   if (!userId || !eventId || !stato) {
-    return res.status(400).json({ error: "L'utente deve essere loggato" });
+    return res.status(400).json({ error: "L'utente deve essere loggato e tutti i campi sono obbligatori." });
   }
 
   if (!["Confermata", "In Attesa", "Annullata"].includes(stato)) {
@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Verifica se l'evento esiste
     const { data: event, error: eventError } = await supabase
       .from("evento")
-      .select("capienza, stato")
+      .select("capienza, stato, data")
       .eq("ide", eventId)
       .single();
 
@@ -43,6 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (event.stato !== "Attivo") {
       return res.status(400).json({ error: "L'evento non è attivo." });
+    }
+
+    // Verifica se la data dell'evento è nel futuro
+    const today = new Date().toISOString().split("T")[0];
+    if (new Date(event.data) < new Date(today)) {
+      return res.status(400).json({ error: "Questo evento non è più prenotabile" });
     }
 
     // Controlla le prenotazioni esistenti
@@ -66,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .insert({
         idu: userId,
         ide: eventId,
-        dataprenotazione: new Date().toISOString().split("T")[0], // Data odierna
+        dataprenotazione: today, // Data odierna
         stato,
       });
 
