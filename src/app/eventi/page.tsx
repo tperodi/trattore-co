@@ -29,6 +29,18 @@ interface ApiEvent {
   categoria?: string;
 }
 
+interface Booking {
+  evento: Evento;
+}
+interface Evento {
+  ide: number;
+  titolo: string;
+  data: string;
+  luogo: string;
+  descrizione?: string;
+  categoria?: string;
+}
+
 const Page: React.FC = () => {
   const [events, setEvents] = useState<EventData[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
@@ -81,10 +93,10 @@ const Page: React.FC = () => {
     
         const response = await fetch(`/api/events/booked?userId=${userId}`);
         if (!response.ok) throw new Error("Errore nel recupero delle prenotazioni");
-        const data = await response.json();
+        const data: { events: Booking[] } = await response.json();
     
         // Estrai e mappa gli eventi prenotati
-        const mappedBookedEvents: EventData[] = data.events.map((booking: any) => ({
+        const mappedBookedEvents: EventData[] = data.events.map((booking) => ({
           id: booking.evento.ide, // ID dell'evento
           title: booking.evento.titolo,
           date: booking.evento.data,
@@ -325,7 +337,7 @@ const Page: React.FC = () => {
 
             {/* Bottone per mostrare gli eventi prenotati */}
             <button
-              onClick={() => setShowOnlyBooked(!showOnlyBooked)}
+              onClick={handleToggleBookedEvents}
               className={`px-4 py-2 rounded-lg ${
                 showOnlyBooked
                   ? "bg-blue-500 text-white"
