@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Validazione dei dati
   if (!userId || !eventId || !stato) {
-    return res.status(400).json({ error: "L'utente deve essere loggato e tutti i campi sono obbligatori." });
+    return res.status(400).json({ error: "L'utente deve essere loggato" });
   }
 
   if (!["Confermata", "In Attesa", "Annullata"].includes(stato)) {

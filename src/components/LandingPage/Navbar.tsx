@@ -61,6 +61,7 @@ const Navbar: React.FC = () => {
         console.log("Logout effettuato con successo.");
         // Rimuovi il cookie o altre informazioni dal client
         Cookies.remove("user");
+        localStorage.clear();
         setUsername("");
         setRole("");
         window.location.href = "/"; // Reindirizza alla homepage o alla pagina desiderata
@@ -71,7 +72,7 @@ const Navbar: React.FC = () => {
       console.error("Errore durante il logout:", error);
     }
   };
-  
+
   return (
     <nav className="fixed w-full bg-white shadow-md z-50">
       <div className="container mx-auto flex justify-between items-center py-4 px-6">
