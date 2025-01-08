@@ -33,18 +33,16 @@ const Page: React.FC = () => {
   const [events, setEvents] = useState<EventData[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [bookedEvents, setBookedEvents] = useState<EventData[]>([]); 
-  const [showOnlyBooked, setShowOnlyBooked] = useState(false); 
-  const itemsPerPage = 9;
+  const [bookedEvents, setBookedEvents] = useState<EventData[]>([]);
+  const [showOnlyBooked, setShowOnlyBooked] = useState(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -174,21 +172,7 @@ const Page: React.FC = () => {
 
 
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentEvents = filteredEvents.slice(startIndex, startIndex + itemsPerPage);
-  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
 
   const handleBookEvent = async (eventId: number) => {
     try {

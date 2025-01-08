@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { FiCalendar, FiShield, FiUsers, FiMenu, FiX } from "react-icons/fi";
+import { FiCalendar, FiShield, FiMenu, FiX } from "react-icons/fi";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 

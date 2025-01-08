@@ -80,9 +80,11 @@ const GestionePermessi = () => {
                 user.idu === userId ? { ...user, ruolo: newRole } : user
             ));
             setEditedRoles(prev => {
-                const { [userId]: _, ...rest } = prev;
-                return rest;
+                const updatedRoles = { ...prev };
+                delete updatedRoles[userId];
+                return updatedRoles;
             });
+            
 
             // Mostra un toast di successo
             toast.success("Ruolo aggiornato con successo!");
