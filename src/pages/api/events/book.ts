@@ -21,8 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { userId, eventId, stato }: { userId: string; eventId: number; stato: string } = req.body;
 
   // Validazione dei dati
-  if (!userId || !eventId || !stato) {
-    return res.status(400).json({ error: "L'utente deve essere loggato" });
+  if (!userId || !eventId) {
+    return res.status(400).json({ error: "L'utente deve essere loggato e specificare un evento." });
   }
 
   if (!["Confermata", "In Attesa", "Annullata"].includes(stato)) {
@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Verifica se la data dell'evento è nel futuro
     const today = new Date().toISOString().split("T")[0];
     if (new Date(event.data) < new Date(today)) {
-      return res.status(400).json({ error: "Questo evento non è più prenotabile" });
+      return res.status(400).json({ error: "Questo evento non è più prenotabile." });
     }
 
     // Controlla le prenotazioni esistenti
@@ -62,18 +62,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: "Errore del server durante la verifica delle prenotazioni." });
     }
 
-    if (bookings.length >= event.capienza) {
-      return res.status(400).json({ error: "Capienza massima dell'evento raggiunta." });
-    }
+    const isEventFull = bookings.length >= event.capienza;
 
-    // Aggiungi la prenotazione
+    // Aggiungi la prenotazione con stato appropriato
+    const bookingState = isEventFull ? "In Attesa" : stato;
+
     const { error: insertError } = await supabase
       .from("prenotazione")
       .insert({
         idu: userId,
         ide: eventId,
-        dataprenotazione: today, // Data odierna
-        stato,
+        dataprenotazione: today,
+        stato: bookingState,
       });
 
     if (insertError) {
@@ -82,6 +82,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       console.error("Errore durante la creazione della prenotazione:", insertError.message);
       return res.status(500).json({ error: "Errore del server durante la prenotazione." });
+    }
+
+    // Restituisci un messaggio in base allo stato della prenotazione
+    if (isEventFull) {
+      return res.status(201).json({
+        message: "La capienza massima dell'evento è stata raggiunta. La tua prenotazione è stata aggiunta con stato In Attesa.",
+      });
     }
 
     return res.status(201).json({ message: "Prenotazione effettuata con successo." });

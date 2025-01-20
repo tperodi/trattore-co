@@ -5,6 +5,7 @@ import { Dialog } from "@headlessui/react";
 import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
 import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
 import { Toaster, toast } from "react-hot-toast";
+import { FiEdit, FiTrash } from "react-icons/fi";
 
 interface Evento {
   ide: number;
@@ -25,6 +26,8 @@ const Dashboard: React.FC = () => {
   const [eventi, setEventi] = useState<Evento[]>([]);
   const [eventoSelezionato, setEventoSelezionato] = useState<Evento | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const fetchEventi = async () => {
@@ -45,6 +48,31 @@ const Dashboard: React.FC = () => {
     fetchEventi();
   }, []);
 
+  // Gestisci il numero di elementi per pagina in base alla larghezza dello schermo
+  useEffect(() => {
+    const updatePageSize = () => {
+      setPageSize(window.innerWidth < 768 ? 3 : 10);
+    };
+
+    updatePageSize();
+    window.addEventListener("resize", updatePageSize);
+    return () => window.removeEventListener("resize", updatePageSize);
+  }, []);
+
+  const startIndex = currentPage * pageSize;
+  const currentEvents = eventi.slice(startIndex, startIndex + pageSize);
+
+  const handleNextPage = () => {
+    if ((currentPage + 1) * pageSize < eventi.length) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
   const handleDelete = async (id: number) => {
     if (confirm("Sei sicuro di voler eliminare questo evento?")) {
       try {
@@ -115,7 +143,7 @@ const Dashboard: React.FC = () => {
                 </Tr>
               </Thead>
               <Tbody>
-                {eventi.map((evento) => (
+                {currentEvents.map((evento) => (
                   <Tr key={evento.ide} className="border-b">
                     <Td className="px-4 py-2">{evento.titolo}</Td>
                     <Td className="px-4 py-2">{evento.data}</Td>
@@ -123,22 +151,44 @@ const Dashboard: React.FC = () => {
                     <Td className="px-4 py-2">{evento.categoria}</Td>
                     <Td className="px-4 py-2 text-center">
                       <button
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                        onClick={() => handleEdit(evento)}
+                          className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600"
+                          onClick={() => handleEdit(evento)}
+                          title="Modifica"
                       >
-                        Modifica
+                        <FiEdit size={18} />
                       </button>
                       <button
                         className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 ml-2"
                         onClick={() => handleDelete(evento.ide)}
+                        title="Elimina"
                       >
-                        Elimina
+                        <FiTrash size={18}/>
                       </button>
                     </Td>
                   </Tr>
                 ))}
               </Tbody>
             </Table>
+          </div>
+          <div className="flex justify-between items-center mt-4">
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 0}
+              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+            >
+              Precedente
+            </button>
+            <span>
+              Pagina <strong>{currentPage + 1}</strong> di{" "}
+              {Math.ceil(eventi.length / pageSize)}
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={(currentPage + 1) * pageSize >= eventi.length}
+              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+            >
+              Successivo
+            </button>
           </div>
         </div>
       </div>

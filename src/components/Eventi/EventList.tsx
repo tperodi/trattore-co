@@ -14,13 +14,14 @@ interface EventData {
 interface EventListProps {
   events: EventData[];
   bookedEvents?: number[]; // IDs degli eventi prenotati
+  pendingEvents?: number[]; // IDs degli eventi con stato "In Attesa"
   onEventClick: (event: EventData) => void;
-  renderEvent?: (event: EventData) => React.ReactNode; // Aggiunta la funzione di rendering personalizzato
 }
 
 const EventList: React.FC<EventListProps> = ({
   events,
   bookedEvents = [],
+  pendingEvents = [],
   onEventClick,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,15 +32,11 @@ const EventList: React.FC<EventListProps> = ({
   const currentEvents = events.slice(startIndex, startIndex + itemsPerPage);
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
   const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
   if (events.length === 0) {
@@ -51,8 +48,16 @@ const EventList: React.FC<EventListProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {currentEvents.map((event) => {
           const isPastEvent = new Date(event.date) < new Date();
-          const isFull = event.currentBookings >= event.capacity;
-          const isBooked = bookedEvents.includes(event.id);
+          const isPending = pendingEvents.includes(event.id); // Prenotazione in attesa
+          const isFull = event.currentBookings >= event.capacity; // Evento pieno
+          const isBooked = bookedEvents.includes(event.id) && !isPending; // Prenotazione confermata
+
+          // Log per diagnosticare lo stato degli eventi
+          console.log(`Evento ID: ${event.id}`);
+          console.log(`  Stato isPastEvent: ${isPastEvent}`);
+          console.log(`  Stato isPending: ${isPending}`);
+          console.log(`  Stato isFull: ${isFull}`);
+          console.log(`  Stato isBooked: ${isBooked}`);
 
           return (
             <div
@@ -60,6 +65,8 @@ const EventList: React.FC<EventListProps> = ({
               className={`p-4 border rounded-lg shadow hover:shadow-lg ${
                 isPastEvent
                   ? "bg-gray-200 text-gray-500"
+                  : isPending
+                  ? "bg-yellow-100 border-yellow-500"
                   : isFull
                   ? "bg-red-100 border-red-500"
                   : isBooked
@@ -68,9 +75,7 @@ const EventList: React.FC<EventListProps> = ({
               }`}
               onClick={() => onEventClick(event)}
             >
-              <h3 className="text-xl font-bold mb-2 text-blue-600">
-                {event.title}
-              </h3>
+              <h3 className="text-xl font-bold mb-2 text-blue-600">{event.title}</h3>
               <p className="text-gray-600">
                 <strong>Data:</strong> {event.date}
               </p>
@@ -78,16 +83,29 @@ const EventList: React.FC<EventListProps> = ({
                 <strong>Luogo:</strong> {event.location}
               </p>
               <p className="text-gray-600">{event.description}</p>
-              {isFull && (
+
+              {/* Stato "In Attesa" */}
+              {!isPastEvent && isPending && (
+                <p className="mt-2 text-sm text-yellow-500 font-semibold">
+                  Prenotazione in Attesa
+                </p>
+              )}
+
+              {/* Stato "Evento al completo" */}
+              {!isPending && isFull && (
                 <p className="mt-2 text-sm text-red-500 font-semibold">
                   Evento al completo
                 </p>
               )}
+
+              {/* Stato "Prenotato" */}
               {!isPastEvent && isBooked && (
                 <p className="mt-2 text-sm text-green-500 font-semibold">
                   Evento Prenotato
                 </p>
               )}
+
+              {/* Stato "Evento Passato" */}
               {isPastEvent && (
                 <p className="mt-2 text-sm text-red-500 font-semibold">
                   Evento Passato

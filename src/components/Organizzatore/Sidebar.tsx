@@ -1,8 +1,7 @@
-// Sidebar.tsx
 "use client";
 
 import React, { useState } from "react";
-import { FiCalendar, FiPlus, FiMenu, FiX } from "react-icons/fi";
+import { FiCalendar, FiPlus, FiMenu, FiX, FiList } from "react-icons/fi";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,13 +20,18 @@ const Sidebar: React.FC = () => {
       label: "Crea Evento",
       icon: <FiPlus className="mr-3" />,
     },
+    {
+      href: "/organizzazione/gestione-prenotazioni", // Nuova pagina
+      label: "Gestione Prenotazioni",
+      icon: <FiList className="mr-3" />, // Icona di una lista
+    },
   ];
 
   return (
     <div className="relative flex">
       {/* Hamburger Icon */}
       <button
-        className="fixed top-3 left-4 z-30 lg:hidden p-2 text-black rounded-full "
+        className="fixed top-3 left-4 z-30 lg:hidden p-2 text-black rounded-full"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
@@ -49,7 +53,9 @@ const Sidebar: React.FC = () => {
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-center h-20 border-b border-green-500">
-        <Link href={"/"}><h1 className="text-2xl font-bold">EventiPrenota</h1></Link>
+          <Link href={"/"}>
+            <h1 className="text-2xl font-bold">EventiPrenota</h1>
+          </Link>
         </div>
 
         {/* Navigation Menu */}

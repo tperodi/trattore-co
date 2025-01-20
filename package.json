@@ -9,15 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.5",
-    "@emotion/styled": "^11.13.5",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@fortawesome/free-brands-svg-icons": "^6.7.1",
     "@fortawesome/free-solid-svg-icons": "^6.7.1",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@headlessui/react": "^2.2.0",
-    "@mui/icons-material": "^6.1.8",
-    "@mui/material": "^6.1.8",
+    "@mui/icons-material": "^6.4.0",
+    "@mui/material": "^6.4.0",
     "@supabase/supabase-js": "^2.46.2",
+    "@tanstack/react-table": "^8.20.6",
     "@vercel/analytics": "^1.4.1",
     "@vercel/speed-insights": "^1.1.0",
     "bcrypt": "^5.1.1",
@@ -30,6 +31,7 @@
     "next": "15.0.3",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
+    "react-date-range": "^2.0.1",
     "react-datepicker": "^7.5.0",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
@@ -40,7 +42,8 @@
     "react-select": "^5.9.0",
     "react-slick": "^0.30.2",
     "react-super-responsive-table": "^6.0.0",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "tailwind-scrollbar-hide": "^2.0.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

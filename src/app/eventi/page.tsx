@@ -19,6 +19,7 @@ interface EventData {
   category: string;
   capacity: number; // Nuova proprietà per la capienza massima
   currentBookings: number; // Nuova proprietà per il numero di prenotazioni
+  stato?: string;
 }
 
 interface ApiEvent {
@@ -34,9 +35,11 @@ interface ApiEvent {
 
 
 interface Booking {
+  stato: string;
   evento: Evento;
 }
 interface Evento {
+  stato?:string;
   prenotazioni: number;
   capienza: number;
   ide: number;
@@ -135,6 +138,7 @@ const Page: React.FC = () => {
           category: booking.evento.categoria || "Non specificata",
           capacity: booking.evento.capienza || 0, // Capienza massima, con valore predefinito
           currentBookings: booking.evento.prenotazioni || 0, // Prenotazioni correnti, con valore predefinito
+          stato: booking.stato, // Stato dell'evento (Confermata, In Attesa)
         }));
         
     
@@ -252,15 +256,27 @@ const Page: React.FC = () => {
       const bookedEvent = events.find((event) => event.id === eventId);
   
       if (bookedEvent) {
-        setBookedEvents((prev) => [...prev, bookedEvent]);
-      }
+        // Controlla se l'evento è pieno e aggiungi come "In Attesa" se necessario
+        const isPending = bookedEvent.currentBookings >= bookedEvent.capacity;
   
-      // Aggiorna lo stato dell'evento
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === eventId ? { ...event, isBooked: true } : event
-        )
-      );
+        setBookedEvents((prev) => {
+          const updated = [...prev, { ...bookedEvent, stato: isPending ? "In Attesa" : "Confermata" }];
+          console.log("Aggiornato bookedEvents:", updated);
+          return updated;
+        });
+  
+        // Aggiorna l'elenco degli eventi per modificare lo stato
+        setEvents((prevEvents) =>
+          prevEvents.map((event) =>
+            event.id === eventId
+              ? {
+                  ...event,
+                  currentBookings: event.currentBookings + 1,
+                }
+              : event
+          )
+        );
+      }
   
       setSelectedEvent(null);
     } catch (err: unknown) {
@@ -273,6 +289,7 @@ const Page: React.FC = () => {
       }
     }
   };
+  
   
   const handleCancelBooking = async (eventId: number) => {
     try {
@@ -437,8 +454,17 @@ const Page: React.FC = () => {
 
         <EventList
   events={filteredEvents}
-  bookedEvents={bookedEvents.map((event) => event.id)}
+  bookedEvents={bookedEvents.map((event) => event.id)} // IDs degli eventi prenotati
+  pendingEvents={(() => {
+    const pending = bookedEvents
+      .filter((event) => event.stato === "In Attesa") // Filtra eventi con stato "In Attesa"
+      .map((event) => event.id); // IDs degli eventi "In Attesa"
+
+    console.log("Eventi con prenotazione in attesa:", pending);
+    return pending;
+  })()}
   onEventClick={(event) => {
+    // Gestione del click sull'evento
     if (new Date(event.date) >= new Date()) {
       setSelectedEvent({
         ...event,
@@ -448,55 +474,9 @@ const Page: React.FC = () => {
       });
     }
   }}
-  renderEvent={(event) => {
-    const isFull = event.currentBookings >= event.capacity;
-    const isPastEvent = new Date(event.date) < new Date();
-    const isBooked = bookedEvents.some((bookedEvent) => bookedEvent.id === event.id);
-
-    return (
-      <div
-        key={event.id}
-        className={`p-4 rounded-lg mb-4 shadow ${
-          isPastEvent
-            ? 'bg-gray-300 text-gray-500 cursor-pointer'
-            : isFull
-            ? 'bg-red-100 border-red-500 cursor-pointer'
-            : isBooked
-            ? 'bg-green-100 border-green-500 cursor-pointer'
-            : 'bg-white text-black cursor-pointer'
-        }`}
-        onClick={() => {
-          setSelectedEvent({
-            ...event,
-            description: event.description || "Descrizione non disponibile",
-            capacity: event.capacity,
-            currentBookings: event.currentBookings,
-          });
-        }}
-      >
-        <h3 className={`font-semibold ${isFull ? 'text-red-600' : ''}`}>
-          {event.title}
-        </h3>
-        <p>{event.date}</p>
-        <p>{event.location}</p>
-        <p>
-          Prenotazioni: {event.currentBookings}/{event.capacity}
-        </p>
-        {isFull && (
-          <p className="text-sm text-red-500 font-semibold">
-            Evento al completo
-          </p>
-        )}
-        {isBooked && (
-          <p className="text-sm text-green-500 font-semibold">Prenotato</p>
-        )}
-        {isPastEvent && (
-          <p className="text-sm text-red-500 font-semibold">Evento Passato</p>
-        )}
-      </div>
-    );
-  }}
 />
+
+
 
 
 
