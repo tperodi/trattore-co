@@ -36,24 +36,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Errore del server durante il recupero degli eventi.' });
     }
 
-    const enrichedEvents = await Promise.all(
-      eventsData.map(async (event: { titolo: string; capienza: number; stato: string; ide: number; }) => {
-        const { data: bookingsData, error: bookingsError } = await supabase
-          .from('prenotazione')
-          .select('idp')
-          .eq('ide', event.ide);
+    // Prepara una mappa per contare le prenotazioni per evento
+    const eventIds = eventsData.map((event) => event.ide);
+    const { data: bookingsData, error: bookingsError } = await supabase
+      .from('prenotazione')
+      .select('ide');
 
-        if (bookingsError) {
-          console.error(
-            `Errore durante il recupero delle prenotazioni per l'evento ${event.titolo}:`,
-            bookingsError.message
-          );
-          return { ...event, prenotazioni: 0 };
-        }
+    if (bookingsError) {
+      console.error('Errore durante il recupero delle prenotazioni:', bookingsError.message);
+      return res.status(500).json({ error: 'Errore del server durante il recupero delle prenotazioni.' });
+    }
 
-        return { ...event, prenotazioni: bookingsData ? bookingsData.length : 0 };
-      })
-    );
+    const bookingCounts = bookingsData?.reduce((acc: Record<number, number>, booking) => {
+      acc[booking.ide] = (acc[booking.ide] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Arricchisci i dati degli eventi con il numero di prenotazioni
+    const enrichedEvents = eventsData.map((event) => ({
+      ...event,
+      prenotazioni: bookingCounts[event.ide] || 0,
+    }));
 
     // Ordinare gli eventi per numero di prenotazioni decrescente
     enrichedEvents.sort((a: EventData, b: EventData) => b.prenotazioni - a.prenotazioni);

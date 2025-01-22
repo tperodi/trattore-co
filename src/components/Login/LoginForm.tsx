@@ -1,10 +1,12 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation"; // Hook per il redirect
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Icone per l'occhio
 
 const LoginForm: React.FC = () => {
   const [identifier, setIdentifier] = useState(""); // Email o Nome Utente
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // Stato per visualizzare/nascondere la password
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -32,7 +34,7 @@ const LoginForm: React.FC = () => {
       // Mostra il messaggio di successo
       setSuccessMessage(`Benvenuto, ${data.user.username}!`);
 
-      localStorage.setItem("userId",data.user.id);
+      localStorage.setItem("userId", data.user.id);
 
       // Reindirizza in base al ruolo
       switch (data.user.role) {
@@ -86,12 +88,12 @@ const LoginForm: React.FC = () => {
         </div>
 
         {/* Campo Password */}
-        <div className="mb-4">
+        <div className="mb-4 relative">
           <label htmlFor="password" className="block text-gray-700 mb-2">
             Password
           </label>
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -99,6 +101,13 @@ const LoginForm: React.FC = () => {
             placeholder="Inserisci la tua password"
             required
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute top-11 transform -translate-y-2/6 right-0 px-3 flex items-center focus:outline-none"
+          >
+            {showPassword ? <FaEyeSlash className="text-gray-500" /> : <FaEye className="text-gray-500" />}
+          </button>
         </div>
 
         {/* Pulsante Login */}

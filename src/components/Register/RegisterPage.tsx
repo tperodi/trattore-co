@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 const RegisterPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br flex items-center justify-center">
       <div className="bg-white shadow-xl rounded-lg p-8 w-full max-w-lg">
         <RegisterHeader />
         <RegisterForm />

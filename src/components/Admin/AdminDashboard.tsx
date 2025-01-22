@@ -12,19 +12,36 @@ type EventData = {
     prenotazioni: number;
 };
 
+type UserData = {
+    id: number;
+    nome: string;
+    cognome: string;
+    email: string;
+};
+
 const Dashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<EventData[] | null>(null);
+    const [usersWithoutBookings, setUsersWithoutBookings] = useState<UserData[] | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const response = await fetch("/api/AdminDashboard/events-more-book");
-                if (!response.ok) throw new Error("Errore nel caricamento dei dati");
+                if (!response.ok) throw new Error("Errore nel caricamento dei dati degli eventi");
                 const result = await response.json();
                 if (!result.events) throw new Error("Dati degli eventi mancanti dall'API");
                 setData(result.events);
+
+                const usersResponse = await fetch("/api/users/no-bookings");
+                if (!usersResponse.ok) throw new Error("Errore nel caricamento dei dati degli utenti");
+                const usersResult = await usersResponse.json();
+                if (!usersResult.users) throw new Error("Dati degli utenti mancanti dall'API");
+                setUsersWithoutBookings(usersResult.users);
             } catch (err) {
                 setError((err as Error).message);
             } finally {
@@ -40,45 +57,86 @@ const Dashboard = () => {
 
     const topEvents = data?.slice(0, 5) || [];
 
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedUsers = usersWithoutBookings?.slice(startIndex, endIndex) || [];
+
+    const totalPages = Math.ceil((usersWithoutBookings?.length || 0) / itemsPerPage);
+
     return (
         <div className="p-4 sm:p-6 md:p-8 space-y-6">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">Dashboard Insights</h1>
-            <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-white shadow-lg rounded-lg p-4">
+            <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="bg-white shadow-lg rounded-lg p-4 h-auto flex flex-col">
                     <h2 className="text-base sm:text-lg font-medium mb-2">Top 5 Eventi per Prenotazioni</h2>
-                    <Pie
-                        data={{
-                            labels: topEvents.map(event => event.titolo),
-                            datasets: [
-                                {
-                                    label: "Prenotazioni",
-                                    data: topEvents.map(event => event.prenotazioni),
-                                    backgroundColor: ["#36A2EB", "#FFCE56", "#FF6384", "#4BC0C0", "#66BB6A"],
-                                },
-                            ],
-                        }}
-                        options={{ responsive: true, plugins: { legend: { position: "bottom" } } }}
-                    />
-                </div>
-                <div className="bg-white shadow-lg rounded-lg p-6">
-    <h2 className="text-lg font-medium mb-4">Capacità e Stato Eventi</h2>
-    <ul className="divide-y divide-gray-200">
-        {topEvents.map((event) => (
-            <li key={event.titolo} className="py-4">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <span className="block text-gray-800 font-semibold">{event.titolo}</span>
-                        <span className="block text-gray-500 text-sm">Stato: {event.stato}</span>
+                    <div className="mt-4">
+                        <Pie
+                            data={{
+                                labels: topEvents.map((event) => event.titolo),
+                                datasets: [
+                                    {
+                                        label: "Prenotazioni",
+                                        data: topEvents.map((event) => event.prenotazioni),
+                                        backgroundColor: ["#36A2EB", "#FFCE56", "#FF6384", "#4BC0C0", "#66BB6A"],
+                                    },
+                                ],
+                            }}
+                            options={{ responsive: true, plugins: { legend: { position: "bottom" } } }}
+                        />
                     </div>
-                    <span className="text-gray-600 text-sm">
-                        Capienza: <strong>{event.capienza}</strong>
-                    </span>
                 </div>
-            </li>
-        ))}
-    </ul>
-</div>
-
+                <div className="space-y-6 flex flex-col h-auto">
+                    <div className="bg-white shadow-lg rounded-lg p-6 flex-grow">
+                        <h2 className="text-lg font-medium mb-4">Capacità e Stato Eventi</h2>
+                        <ul className="divide-y divide-gray-200">
+                            {topEvents.map((event, index) => (
+                                <li key={`${index}-${event.titolo}`} className="py-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <span className="block text-gray-800 font-semibold">{event.titolo}</span>
+                                            <span className="block text-gray-500 text-sm">Stato: {event.stato}</span>
+                                        </div>
+                                        <span className="text-gray-600 text-sm">
+                                            Capienza: <strong>{event.capienza}</strong>
+                                        </span>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className="bg-white shadow-lg rounded-lg p-6 flex-grow">
+                        <h2 className="text-lg font-medium mb-4">Utenti senza Prenotazioni</h2>
+                        <ul className="divide-y divide-gray-200">
+                            {paginatedUsers.map((user, index) => (
+                                <li key={user.id || `${index}-${user.email}`} className="py-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <span className="block text-gray-800 font-semibold">{user.nome} {user.cognome}</span>
+                                            <span className="block text-gray-500 text-sm">Email: {user.email}</span>
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                        <div className="flex justify-between items-center mt-4">
+                            <button
+                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg"
+                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Precedente
+                            </button>
+                            <span className="text-sm text-gray-600">Pagina {currentPage} di {totalPages}</span>
+                            <button
+                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg"
+                                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Successiva
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </section>
         </div>
     );
