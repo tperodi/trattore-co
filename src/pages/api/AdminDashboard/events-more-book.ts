@@ -36,8 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Errore del server durante il recupero degli eventi.' });
     }
 
-    // Prepara una mappa per contare le prenotazioni per evento
-    const eventIds = eventsData.map((event) => event.ide);
+    // Query per ottenere tutte le prenotazioni
     const { data: bookingsData, error: bookingsError } = await supabase
       .from('prenotazione')
       .select('ide');
